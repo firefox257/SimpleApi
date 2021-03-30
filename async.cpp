@@ -1,3 +1,9 @@
+
+
+#ifndef ASYNC_CPP
+#define ASYNC_CPP
+
+
 #include <iostream>
 #include <string>
 #include <list>
@@ -21,23 +27,68 @@ void sleepSeconds(int seconds)
 }
 
 
+class donestate
+{
+	bool _done = false;
+	public:
+	
+	void operator =(bool state)
+	{
+		_done = state;
+	}
+	
+	operator bool()
+	{
+		return _done;
+	}
+	
+};
+
+class donestatequeue: public queue<donestate>
+{
+	public:
+	
+	donestate & create()
+	{
+		
+		push(donestate());
+		return back();
+		
+	}
+};
 
 class asyncobj
 {
 	
+	donestate * doneptr = 0;
 	public:
+	
+	
+	
 	
 	virtual void operator()()
 	{
 	}
+	void setWaiter(donestate & donewait)
+	{
+		doneptr = &donewait;
+	}
+	void done()
+	{
+		if(doneptr != 0)
+		{
+			(*doneptr) = true;
+		}
+	}
+	
 };
 
-
+#define NUMBEROFASYNCCORES 256
 class asyncworkers
 {
 	queue<asyncobj*> masterqueue;
 	
-	thread threadworker[32];
+	thread threadworker[NUMBEROFASYNCCORES];
 	
 	mutex mtx;
 	bool keeprunning = true;
@@ -46,7 +97,7 @@ class asyncworkers
 	asyncworkers()
 	{
 		//cout << "start workers" el;
-		for(int i = 0; i < 32; i++)
+		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
 			threadworker[i] = thread([&]()
 			{
@@ -55,21 +106,28 @@ class asyncworkers
 				while(keeprunning)
 				{
 					lck.lock();
-					if(!masterqueue.empty())
+					bool empty = masterqueue.empty();
+					lck.unlock();
+					if(!empty)
 					{
+						lck.lock();
 						asyncobj * n = masterqueue.front();
 						masterqueue.pop();
+						lck.unlock();
+						
 						(*n)();
+						
+						(*n).done();
 						delete(n);
 						n = 0;
 						
 						
 					}
-					lck.unlock();
+					//lck.unlock();
 					this_thread::yield();
 					
 					
-				}//when while
+				}//end while
 				
 				
 			});
@@ -100,76 +158,36 @@ void asyncrun(void * asyncobject)
 	
 }
 
-
-class voidasync: public asyncobj
+void asyncrun(void * asyncobject, donestate & done)
 {
-	function<void()> _func;
-	public:
-	voidasync(function<void()> func)
-	{
-		_func = func;
-	}
-	void operator()()
-	{
-		_func();
-	}
-};
-
-class try1async: public asyncobj
-{
-	int _id;
-	function<void(int)> _func;
-	public:
-		try1async(function<void(int)> func, int id)
-	{
-	_func = func;
-		_id = id;
-	}
-	void operator()()
-	{
-		_func(_id);
-	}
-};
-int main()
-{
-	int count = 0;
-	mutex mtx;
-	for(int i = 0; i < 1000; i++)
-	{
+	static asyncworkers workers;
+	asyncobj * asyncptr = (asyncobj*)asyncobject;
+	(*asyncptr).setWaiter(done);
+	workers.add(asyncobject);
 	
-		asyncrun(new try1async([&](int id)
-		{
-			//cout << "hi there " el;
-			unique_lock lck(mtx, defer_lock);
-			lck.lock();
-			count++;
-			//int per = (int)(((float)count / 2000000.0f) * 100.0f);
-			//cout << per el;
-			lck.unlock();
-			
-		}, i));
-	}
-	cout << "end adding" el;
-	
-	sleepSeconds(3);
-	asyncrun(new voidasync([]()
-	{
-		
-		cout << "hi there 1" el;
-		
-	}));
-	sleepSeconds(5);
-	asyncrun(new voidasync([]()
-	{
-		
-		cout << "hi there 2" el;
-		
-	}));
-	
-	
-	sleepSeconds(3);
-	cout << "count " << count el;
-	
-	
-    return 0;
 }
+
+void waitfor(donestate &done)
+{
+	while(!done)
+	{
+		this_thread::yield();
+	}
+}
+
+void waitforAll(donestatequeue & donequeue)
+{
+	while(!donequeue.empty())
+	{
+		donestate * dptr = &(donequeue.front());
+		while(!(*dptr))
+		{
+			this_thread::yield();
+		}
+		donequeue.pop();
+	}
+}
+
+
+#endif
+
