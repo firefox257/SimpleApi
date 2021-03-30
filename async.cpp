@@ -89,15 +89,25 @@ class asyncworkers
 	queue<asyncobj*> masterqueue;
 	
 	thread threadworker[NUMBEROFASYNCCORES];
+	queue<int> inactivethreadworkerid;
+	
+	
 	
 	mutex mtx;
-	bool keeprunning = true;
+	mutex inactivemtx;
+	
+	//bool keeprunning = true;
 	
 	public:
 	asyncworkers()
 	{
-		//cout << "start workers" el;
 		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
+		{
+			inactivethreadworkerid.push(i);
+		}
+		
+		//cout << "start workers" el;
+		/*for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
 			threadworker[i] = thread([&]()
 			{
@@ -123,7 +133,7 @@ class asyncworkers
 						
 						
 					}
-					//lck.unlock();
+					
 					this_thread::yield();
 					
 					
@@ -132,13 +142,12 @@ class asyncworkers
 				
 			});
 			
-		}
+		}*/
 		//cout << "end workers " el;
 	}
 	~asyncworkers()
 	{
-		keeprunning = false;
-		sleepSeconds(5);
+		//sleepSeconds(5);
 	}
 	void add(void * asyncobject)
 	{
@@ -147,23 +156,80 @@ class asyncworkers
 		masterqueue.push((asyncobj*)asyncobject);
 		addlck.unlock();
 		
+		unique_lock inaclck(mtx, defer_lock);
+		inaclck.lock();
+		bool inacempty = inactivethreadworkerid.empty();
+		inaclck.unlock();
+		
+		if(!inacempty)
+		{
+			inaclck.lock();
+			int atid =inactivethreadworkerid.front();
+			inactivethreadworkerid.pop();
+			inaclck.unlock();
+			
+			threadworker[atid] = thread([&](int id)
+			{
+				unique_lock lck(mtx, defer_lock);
+				bool empty = false;
+				while(!empty)
+				{
+					lck.lock();
+					empty = masterqueue.empty();
+					lck.unlock();
+					if(!empty)
+					{
+						lck.lock();
+						asyncobj * n = masterqueue.front();
+						masterqueue.pop();
+						lck.unlock();
+						
+						(*n)();
+						
+						(*n).done();
+						delete(n);
+						n = 0;
+						
+						
+					}
+					
+					//this_thread::yield();
+					
+					
+				}//end while
+				
+				
+				unique_lock invactivelck(mtx, defer_lock);
+				invactivelck.lock();
+				inactivethreadworkerid.push(id);
+				invactivelck.unlock();
+				
+			}, atid);
+			
+		}
+		
+		
 	}
 	
 };
 
+
+
+asyncworkers __ASYNCWORKERS;
+
 void asyncrun(void * asyncobject)
 {
-	static asyncworkers workers;
-	workers.add(asyncobject);
+	//static asyncworkers workers;
+	 __ASYNCWORKERS.add(asyncobject);
 	
 }
 
 void asyncrun(void * asyncobject, donestate & done)
 {
-	static asyncworkers workers;
+	//static asyncworkers workers;
 	asyncobj * asyncptr = (asyncobj*)asyncobject;
 	(*asyncptr).setWaiter(done);
-	workers.add(asyncobject);
+	 __ASYNCWORKERS.add(asyncobject);
 	
 }
 
