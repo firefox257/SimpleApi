@@ -88,123 +88,90 @@ class asyncworkers
 {
 	queue<asyncobj*> masterqueue;
 	
-	thread threadworker[NUMBEROFASYNCCORES];
+	thread * threadworker[NUMBEROFASYNCCORES];
 	queue<int> inactivethreadworkerid;
 	
 	
 	
-	mutex mtx;
-	mutex inactivemtx;
+	mutex addqueuemtx;
+	mutex threadrenewmtx;
 	
-	//bool keeprunning = true;
 	
 	public:
 	asyncworkers()
 	{
+		sleepSeconds(4);
 		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
+			threadworker[i] = new thread([](){});
 			inactivethreadworkerid.push(i);
 		}
 		
-		//cout << "start workers" el;
-		/*for(int i = 0; i < NUMBEROFASYNCCORES; i++)
-		{
-			threadworker[i] = thread([&]()
-			{
-				unique_lock lck(mtx, defer_lock);
-				
-				while(keeprunning)
-				{
-					lck.lock();
-					bool empty = masterqueue.empty();
-					lck.unlock();
-					if(!empty)
-					{
-						lck.lock();
-						asyncobj * n = masterqueue.front();
-						masterqueue.pop();
-						lck.unlock();
-						
-						(*n)();
-						
-						(*n).done();
-						delete(n);
-						n = 0;
-						
-						
-					}
-					
-					this_thread::yield();
-					
-					
-				}//end while
-				
-				
-			});
-			
-		}*/
-		//cout << "end workers " el;
 	}
 	~asyncworkers()
 	{
-		//sleepSeconds(5);
+		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
+		{
+			//(*threadworker[i]).join();
+			//delete(threadworker[i]);
+		}
 	}
 	void add(void * asyncobject)
 	{
-		unique_lock addlck(mtx, defer_lock);
+		unique_lock addlck(addqueuemtx, defer_lock);
 		addlck.lock();
-		masterqueue.push((asyncobj*)asyncobject);
+			masterqueue.push((asyncobj*)asyncobject);
 		addlck.unlock();
 		
-		unique_lock inaclck(mtx, defer_lock);
-		inaclck.lock();
-		bool inacempty = inactivethreadworkerid.empty();
-		inaclck.unlock();
 		
-		if(!inacempty)
-		{
-			inaclck.lock();
-			int atid =inactivethreadworkerid.front();
-			inactivethreadworkerid.pop();
-			inaclck.unlock();
-			
-			threadworker[atid] = thread([&](int id)
+		unique_lock threadrenewlck(addqueuemtx, defer_lock);
+		threadrenewlck.lock();
+			bool incactiveempty = inactivethreadworkerid.empty();
+			int threadid;
+			if(!incactiveempty)
 			{
-				unique_lock lck(mtx, defer_lock);
-				bool empty = false;
-				while(!empty)
+				threadid = inactivethreadworkerid.front();
+				inactivethreadworkerid.pop();
+			}
+		threadrenewlck.unlock();
+		
+		if(!incactiveempty)
+		{
+				(*threadworker[threadid]).join();
+				delete(threadworker[threadid]);
+			
+				threadworker[threadid] = new thread([&](int id)//, mutex & addqueuemtx, 	queue<asyncobj*> & masterqueue)
 				{
-					lck.lock();
-					empty = masterqueue.empty();
-					lck.unlock();
-					if(!empty)
+					bool empty = false;
+					asyncobj * n;
+					do
 					{
-						lck.lock();
-						asyncobj * n = masterqueue.front();
-						masterqueue.pop();
-						lck.unlock();
-						
-						(*n)();
-						
-						(*n).done();
-						delete(n);
-						n = 0;
-						
+						unique_lock addlck(addqueuemtx, defer_lock);
+						addlck.lock();
+							empty = masterqueue.empty();
+							if(!empty)
+							{
+								n = masterqueue.front();
+								masterqueue.pop();
+							}
+						addlck.unlock();
+						if(!empty)
+						{
+							(*n)();
+							(*n).done();
+							delete(n);
+						}
 						
 					}
+					while(!empty);
 					
-					//this_thread::yield();
+					unique_lock threadrenewlck(threadrenewmtx, defer_lock);
+					threadrenewlck.lock();
+						inactivethreadworkerid.push(id);
+					threadrenewlck.unlock();
 					
-					
-				}//end while
-				
-				
-				unique_lock invactivelck(mtx, defer_lock);
-				invactivelck.lock();
-				inactivethreadworkerid.push(id);
-				invactivelck.unlock();
-				
-			}, atid);
+				}, threadid);//, addqueuemtx, masterqueue);
+			
 			
 		}
 		
@@ -219,14 +186,12 @@ asyncworkers __ASYNCWORKERS;
 
 void asyncrun(void * asyncobject)
 {
-	//static asyncworkers workers;
 	 __ASYNCWORKERS.add(asyncobject);
 	
 }
 
 void asyncrun(void * asyncobject, donestate & done)
 {
-	//static asyncworkers workers;
 	asyncobj * asyncptr = (asyncobj*)asyncobject;
 	(*asyncptr).setWaiter(done);
 	 __ASYNCWORKERS.add(asyncobject);
