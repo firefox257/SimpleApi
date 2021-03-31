@@ -14,6 +14,8 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <tuple>
+#include <utility>
 #include <stdlib.h>
 
 using namespace std;
@@ -57,12 +59,12 @@ class donestatequeue: public queue<donestate>
 	}
 };
 
-class asyncobj
+
+class asyncbase
 {
 	
 	donestate * doneptr = 0;
 	public:
-	
 	
 	
 	
@@ -83,10 +85,32 @@ class asyncobj
 	
 };
 
+template<class...Args>
+class asyncobj: public asyncbase
+{
+	function<void(Args...)> _func;
+	tuple<Args...> _args;
+	public:
+	asyncobj(Args... args)
+	{
+		_args = tuple(args...);
+	}
+	asyncobj * run(function<void(Args...)> func)
+	{
+		_func = func;
+		return this;
+	}
+	void operator()()
+	{
+		apply(_func, _args);
+	}
+	
+};
+
 #define NUMBEROFASYNCCORES 256
 class asyncworkers
 {
-	queue<asyncobj*> masterqueue;
+	queue<asyncbase*> masterqueue;
 	
 	thread * threadworker[NUMBEROFASYNCCORES];
 	queue<int> inactivethreadworkerid;
@@ -111,15 +135,15 @@ class asyncworkers
 	{
 		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
-			//(*threadworker[i]).join();
-			//delete(threadworker[i]);
+			(*threadworker[i]).join();
+			delete(threadworker[i]);
 		}
 	}
 	void add(void * asyncobject)
 	{
 		unique_lock addlck(addqueuemtx, defer_lock);
 		addlck.lock();
-			masterqueue.push((asyncobj*)asyncobject);
+			masterqueue.push((asyncbase*)asyncobject);
 		addlck.unlock();
 		
 		
@@ -142,7 +166,7 @@ class asyncworkers
 				threadworker[threadid] = new thread([&](int id)//, mutex & addqueuemtx, 	queue<asyncobj*> & masterqueue)
 				{
 					bool empty = false;
-					asyncobj * n;
+					asyncbase * n;
 					do
 					{
 						unique_lock addlck(addqueuemtx, defer_lock);
@@ -191,7 +215,7 @@ void asyncrun(void * asyncobject)
 
 void asyncrun(void * asyncobject, donestate & done)
 {
-	asyncobj * asyncptr = (asyncobj*)asyncobject;
+	asyncbase * asyncptr = (asyncbase*)asyncobject;
 	(*asyncptr).setWaiter(done);
 	 __ASYNCWORKERS.add(asyncobject);
 	
