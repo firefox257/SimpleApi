@@ -100,7 +100,6 @@ class asyncworkers
 	public:
 	asyncworkers()
 	{
-		sleepSeconds(4);
 		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
 			threadworker[i] = new thread([](){});
