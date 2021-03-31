@@ -1,0 +1,24 @@
+template<typename T>
+struct identity
+{
+	typedef T type;
+	
+};
+
+
+
+template <typename... T>
+void func(typename identity<function<void(T...)>>::type f, T... values)
+{
+	f(values...);
+	
+}
+
+template
+
+template <typename... T>
+void handle(typename identity<function<void(T...)>>::type f)
+{
+	//f(values...);
+	
+}
