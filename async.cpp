@@ -228,6 +228,15 @@ void asyncrun(function<void()> func, donestate & done)//asyncobj * asyncobject, 
 	//cout << "end async" el;
 }
 
+void asyncrun(function<void()> func, donestatequeue & donequeue)//asyncobj * asyncobject, donestate & done)
+{
+	//cout << "start async" el;
+	asyncobj * asyncobject = new asyncobj(func);
+	(*asyncobject).setWaiter(donequeue.create());
+	 __ASYNCWORKERS.add(asyncobject);
+	//cout << "end async" el;
+}
+
 void waitfor(donestate &done)
 {
 	while(!done)
