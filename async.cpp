@@ -60,16 +60,20 @@ class donestatequeue: public queue<donestate>
 };
 
 
-class asyncbase
+class asyncobj
 {
-	
+	function<void()> _func;
 	donestate * doneptr = 0;
 	public:
 	
-	
+	asyncobj(function<void()> func)
+	{
+		_func = func;
+	}
 	
 	virtual void operator()()
 	{
+		_func();
 	}
 	void setWaiter(donestate & donewait)
 	{
@@ -85,7 +89,7 @@ class asyncbase
 	
 };
 
-template<class...Args>
+/*template<class...Args>
 class asyncobj: public asyncbase
 {
 	function<void(Args...)> _func;
@@ -105,12 +109,12 @@ class asyncobj: public asyncbase
 		apply(_func, _args);
 	}
 	
-};
+};*/
 
 #define NUMBEROFASYNCCORES 256
 class asyncworkers
 {
-	queue<asyncbase*> masterqueue;
+	queue<asyncobj*> masterqueue;
 	
 	thread * threadworker[NUMBEROFASYNCCORES];
 	queue<int> inactivethreadworkerid;
@@ -139,11 +143,11 @@ class asyncworkers
 			delete(threadworker[i]);
 		}
 	}
-	void add(void * asyncobject)
+	void add(asyncobj * asyncobject)
 	{
 		unique_lock addlck(addqueuemtx, defer_lock);
 		addlck.lock();
-			masterqueue.push((asyncbase*)asyncobject);
+			masterqueue.push(asyncobject);
 		addlck.unlock();
 		
 		
@@ -162,11 +166,11 @@ class asyncworkers
 		{
 				(*threadworker[threadid]).join();
 				delete(threadworker[threadid]);
-			
+				//cout << "start thread" el;
 				threadworker[threadid] = new thread([&](int id)//, mutex & addqueuemtx, 	queue<asyncobj*> & masterqueue)
 				{
 					bool empty = false;
-					asyncbase * n;
+					asyncobj * n;
 					do
 					{
 						unique_lock addlck(addqueuemtx, defer_lock);
@@ -193,7 +197,8 @@ class asyncworkers
 						inactivethreadworkerid.push(id);
 					threadrenewlck.unlock();
 					
-				}, threadid);//, addqueuemtx, masterqueue);
+				}, threadid);
+				//cout << "end thread" el;
 			
 			
 		}
@@ -207,18 +212,20 @@ class asyncworkers
 
 asyncworkers __ASYNCWORKERS;
 
-void asyncrun(void * asyncobject)
+void asyncrun(function<void()> func)//asyncobj * asyncobject)
 {
-	 __ASYNCWORKERS.add(asyncobject);
+	
+	 __ASYNCWORKERS.add(new asyncobj(func));
 	
 }
 
-void asyncrun(void * asyncobject, donestate & done)
+void asyncrun(function<void()> func, donestate & done)//asyncobj * asyncobject, donestate & done)
 {
-	asyncbase * asyncptr = (asyncbase*)asyncobject;
-	(*asyncptr).setWaiter(done);
+	//cout << "start async" el;
+	asyncobj * asyncobject = new asyncobj(func);
+	(*asyncobject).setWaiter(done);
 	 __ASYNCWORKERS.add(asyncobject);
-	
+	//cout << "end async" el;
 }
 
 void waitfor(donestate &done)
