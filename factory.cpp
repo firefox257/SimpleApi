@@ -3,7 +3,7 @@
 #define FACTORY_CPP
 
 #include <functional>
-
+using namespace std;
 
 
 template <class N>
