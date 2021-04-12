@@ -240,8 +240,17 @@ class datafileread: public datain
 };
 
 
-
-
+#define datastream(T, COUT, CIN)\
+friend dataout & operator  << (dataout & out, const T & o)\
+{\
+	COUT\
+	return out;\
+}\
+friend datain & operator >> (datain & in, T & o)\
+{\
+	CIN\
+	return in;\
+}
 
 
 
