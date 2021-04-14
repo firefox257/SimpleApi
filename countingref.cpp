@@ -44,6 +44,7 @@ class crtry1: public countingref<crtry1, crtry1data>
 crtry1 crfunc()
 {
 	crtry1 t1(123, 124);
+	//or methode cascading t1.x(123).y(124);
 	
 	
 	cout << "here1 " << t1.x() << " " << t1.y() el;
