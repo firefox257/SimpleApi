@@ -4,6 +4,65 @@
 #include "Base.cpp"
 #include "DataIO.cpp"
 
+/* 
+dto is a flexable way to glue data together for transportation. use for datain dataout. 
+
+exmaple
+class try1
+{
+	String msg = "hi there";
+	public:
+	try1()
+	{
+	}
+	void func()
+	{
+		cout << msg el;
+	}
+	
+	datastream(try1,
+		out << o.msg;
+	,
+		in >> o.msg;
+	);
+};
+mbool __try1dtosetup = dto::setupDataOnly<try1>();
+
+int main()
+{
+	try1 t1;
+	
+	dto d1;
+	d1
+	(1, "message 1")
+	(2, "message 2")
+	(3, t1)
+	(4, dto()
+		("one", "one message")
+		("two", t1)
+	);
+	
+	
+	datafilewrite dw("try1.bin");
+	dw << d1;
+	
+	dw.close();
+	
+	datafileread dr("try1.bin");
+	
+	dto d2;
+	dr >> d2;
+	
+	dr.close();
+	
+	cout << d2[1] el;
+	d2[3].at<try1>().func();
+	cout << d2[4]["one"] el;
+	d2[4]["two"].at<try1>().func();
+	return 0;
+}
+
+*/
 
 
 class dto
