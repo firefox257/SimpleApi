@@ -32,10 +32,10 @@ class crtry1: public countingref<crtry1, crtry1data>
 	{
 		x(xx).y(yy);
 	}
-	
+	//provide implmentation for it to assign properly.
 	crtry1 & operator = (const crtry1 & n)
 	{
-		countingref<crtry1, crtry1data>::refequals(n);
+		refequals(n);
 		return (*this);
 	}
 	
