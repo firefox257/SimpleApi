@@ -124,8 +124,8 @@ class countingref
 };
 
 
-#define $cm(T, NA, G, S) T NA() G CMPARENT & NA(const T & v) {S  return (*((CMPARENT*)this));}
-#define $scm(T, NA, B) T NA(){ return B;} CMPARENT & NA(const T & v) { B = v; return (*((CMPARENT*)this));}
+#define $cm(T, NA, G, S) T & NA() G CMPARENT & NA(const T & v) {S  return (*((CMPARENT*)this));}
+#define $scm(T, NA, B) T & NA(){ return B;} CMPARENT & NA(const T & v) { B = v; return (*((CMPARENT*)this));}
 
 
 
