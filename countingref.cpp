@@ -11,8 +11,6 @@ struct crtry1data
 };
 class crtry1: public countingref<crtry1, crtry1data>
 {
-	int _x;
-	int _y;
 	public:
 	#define CMPARENT crtry1
 	$cm(int, x,
