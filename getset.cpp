@@ -1,3 +1,4 @@
+//Do not use. Does not work with counting reference smart pointers. 
 #ifndef GETSET_CPP
 #define GETSET_CPP
 #include <functional>
