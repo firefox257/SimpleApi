@@ -14,8 +14,8 @@
 #include "Types.cpp"
 #include "String.cpp"
 #include "DataIO.cpp"
-//#include "Array.cpp"
-//#include "List.cpp"
+#include "Array.cpp"
+#include "List.cpp"
 
 #include "Async.cpp"
 #include "SmtPtr.hpp"
@@ -24,613 +24,15 @@ using namespace std;
 #define el << "\r\n"
 
 
-template<class N>
-class Array;
-
-template<class N>
-class List;
-
-
-template<class N>
-class ArrayArg
-{
-	public:
-	const N * data = 0;
-	mint size = 0;
-	
-	template<class A>
-	ArrayArg(const A & n)
-	{
-		TypeInfo t(n);
-		if(t.isArray)
-		{
-			data = n;
-			size = t.arraySize;
-		}
-	}
-	
-};
-
-
-template<class N>
-class ArrayData
-{
-	public:
-	N * d = 0;
-	mint size = 0;
-	~ArrayData()
-	{
-		if(d!=0)
-		{
-			delete(d);
-			d = 0;
-			size = 0;
-		}
-	}
-	
-	void setSize(mint s)
-	{
-		if(d!= 0)
-		{
-			d = (N*)realloc(d, s * sizeof(N));
-		}
-		else
-		{
-			d = (N*)malloc(s * sizeof(N));
-		}
-		size = s;
-	}
-	void erase()
-	{
-		if(d!=0)
-		{
-			delete(d);
-			d = 0;
-			size = 0;
-		}
-	}
-	void Copy(const ArrayData<N> & a)
-	{
-		
-		if(a.d == d)
-		{
-			d = 0;
-			size = 0;
-		}
-		setSize(a.size);
-		
-		for(mint i = 0; i < size; i++)
-		{
-			d[i] = a.d[i];
-		}
-		
-	}
-};
-
-template<class N>
-class Array
-{
-	typedef Array CMPARENT;
-	SmtPtr<ArrayData<N>> ref;
-	
-	public:
-	
-	Array()
-	{
-	}
-	
-	
-	Array(ArrayArg<N> n)
-	{
-		mint s = n.size;
-		Size(s);
-		for(mint i = 0; i < s; i++)
-		{
-			ref->d[i] = n.data[i];
-		}
-		
-	}
-	
-	$cm(mint, Size, 
-	{
-		return ref->size;
-	},
-	{
-		ref->setSize(v);
-	});
-	
-	N & operator[](mint index)
-	{
-		return ref->d[index];
-	}
-	
-	void Copy(Array<N> & a)
-	{
-		ref.Release();
-		ref->Copy( (*(a.ref))   );
-	}
-	
-	Array<N> & operator = (ArrayArg<N> & a)
-	{
-		
-		ref.Release();
-		mint s = a.size;
-		Size(s);
-		for(mint i = 0; i < s; i++)
-		{
-			ref->d[i] = a.data[i];
-		}
-	}
-	
-	operator List<N>()
-	{
-		List<N> ret;
-		for(auto i: (*this))
-		{
-			ret.PushBack(i);
-		}
-		return ret;
-	}		
-	
-	N * begin()
-	{
-		return &(ref->d[0]);
-	}
-	N * end()
-	{
-		mint s= Size();
-		return &(ref->d[s]);
-	}
-	
-	$datastream(Array<N>, 
-	{
-		
-		out << o.Size();
-		for(auto i: o)
-		{
-			out << i;
-		}
-	},
-	{
-		mint s;
-		in >> s;
-		o.Size(s);
-		for(auto i: o)
-		{
-			in >> i;
-		}
-		
-	});
-	
-	friend ostream & operator << (ostream & out, Array<N> & o)
-	{
-		out <<"Size: " << o.Size() << "\r\n";
-		for(auto i: o)
-		{
-			out << i << "\r\n";
-		}
-		
-		return out;
-	}
-};
-
-
-template<class N>
-class ListNode
-{
-	public:
-	
-	N n;
-	ListNode<N> * prev = 0;
-	ListNode<N> * next = 0;
-	
-};
-
-template<class N>
-class ListData
-{
-	public:
-	
-	ListNode<N> * h = 0;
-	ListNode<N> * t = 0;
-	mint size = 0;
-	
-	~ListData()
-	{
-		Clear();
-	}
-	void Clear()
-	{
-		ListNode<N> * ptr = h;
-		while(ptr !=0)
-		{
-			
-			ListNode<N> * ptr1 = ptr;
-			ptr = ptr->next;
-			delete(ptr1);
-		}
-		h = 0;
-		t = 0;
-		size = 0;
-	}
-	
-	void PushBack(const N & n)
-	{
-		if(h == 0)
-		{
-			
-			h = t = new ListNode<N>;
-			h->n = n;
-			size++;
-		}
-		else
-		{
-			t->next = new ListNode<N>;
-			t->next->n = n;
-			t->next->prev = t;
-			
-			t = t->next;
-			size++;
-		}
-	}
-	void PushFront(const N & n)
-	{
-		if(h == 0)
-		{
-			
-			h = t = new ListNode<N>;
-			h->n = n;
-			size++;
-		}
-		else
-		{
-			ListNode<N> * ptr = new ListNode<N>;
-			ptr->n = n;
-			h->prev = ptr;
-			ptr->next = h;
-			h = ptr;
-			size++;
-		}
-	}
-	
-	void Remove(ListNode<N> * ptr)
-	{
-		if(size > 0)
-		{
-			if(ptr->next != 0)
-			{
-				ptr->next->prev = ptr->prev;
-			}
-			
-			
-			if(ptr->prev != 0)
-			{
-				ptr->prev->next = ptr->next;
-			}
-			delete(ptr);
-			size--;
-			if(size == 0)
-			{
-				h = t = 0;
-			}
-		}
-	}
-	
-	void PopBack()
-	{
-		ListNode<N> * ptr = t;
-		t = t->prev;
-		size--;
-		t->next = 0;
-		if(size == 0)
-		{
-			h= t = 0;
-		}
-		delete(ptr);
-	}
-	
-	void PopFront()
-	{
-		ListNode<N> * ptr = h;
-		h = h->next;
-		h->prev = 0;
-		size--;
-		if(size == 0)
-		{
-			h = t = 0;
-		}
-		delete(ptr);
-	}
-};
-
-template<class N>
-class List
-{
-	SmtPtr<ListData<N>> ref;
-	
-	public:
-	
-	List()
-	{
-	}
-	
-	List(ArrayArg<N> n)
-	{
-		for(mint i = 0; i < n.size; i++)
-		{
-			ref->PushBack(n.data[i]);
-			
-		}
-	}
-	
-	mint Size()
-	{
-		return ref->size;
-	}
-	
-	void Clear()
-	{
-		ref->Clear();
-	}
-	void PushBack(const N & n)
-	{
-		ref->PushBack(n);
-	}
-	
-	void PushBack(ArrayArg<N> n)
-	{
-		for(mint i = 0; i < n.size; i++)
-		{
-			ref->PushBack(n.data[i]);
-			
-		}
-	}
-	
-	void PushBack(Array<N> & n)
-	{
-		mint s = n.Size();
-		for(mint i = 0; i < s; i++)
-		{
-			ref->PushBack(n[i]);
-			
-		}
-	}
-	
-	void PushFront(const N & n)
-	{
-		ref->PushFront(n);
-	}
-	
-	void PushFront(ArrayArg<N> n)
-	{
-		for(mint i = 0; i < n.size; i++)
-		{
-			ref->PushFront(n.data[i]);
-			
-		}
-	}
-	
-	void PushFront(Array<N> & n)
-	{
-		mint s = n.Size();
-		for(mint i = 0; i < s; i++)
-		{
-			ref->PushFront(n[i]);
-			
-		}
-	}
-	
-	
-	inline void PopBack()
-	{
-		
-		ref->PopBack();
-	}
-	
-	inline void PopFront()
-	{
-		ref->PopFront();
-	}
-	
-	
-	inline N & Front()
-	{
-		return ref->h->n;
-	}
-	inline N & Back()
-	{
-		return ref->t->n;
-	}
-	
-	
-	
-	
-	List<N> & operator = (ArrayArg<N> a)
-	{
-		ref->Clear();
-		PushBack(a);
-		return (*this);
-	}
-	
-	List<N> & operator = (Array<N> & a)
-	{
-		ref->Clear();
-		PushBack(a);
-		return (*this);
-		
-	}
-	
-	class Iterator
-	{
-		public:
-		ListNode<N> * ptr = 0;
-		Iterator()
-		{
-			
-		}
-		Iterator(ListNode<N> * n)
-		{
-			ptr = n;
-		}
-		
-		Iterator & operator++()
-		{
-			if(ptr != 0) ptr = ptr->next;
-			return (*this);
-		}
-		Iterator & operator++(mint)
-		{
-			if(ptr != 0) ptr = ptr->next;
-			return (*this);
-		}
-		
-		mbool operator !=(const Iterator & node)
-		{
-			if(ptr == node.ptr) return false;
-			return true;
-		}
-		 
-		N & operator*()
-		{
-			return ptr->n;
-			
-		}
-		
-	};
-	
-	Iterator begin()
-	{
-		return Iterator(ref->h);
-	}
-	 
-	
-	const Iterator & end()
-	{
-		static const Iterator enditerator;
-		return enditerator;
-	}
-	
-	void remove(Iterator & i)
-	{
-		if(i.ptr == ref->h)
-		{
-			ref->PopFront();
-			i.ptr = ref->h;
-		}
-		else if(i.ptr == ref->t)
-		{
-			ref->PopBack();
-			i.ptr =0;
-		}
-		else
-		{
-			ListNode<N> * node = i.ptr->next;
-			ref->Remove(i.ptr);
-			i.ptr = node;
-		}
-	}
-	
-	
-	operator Array<N>()
-	{
-		Array<N> a;
-		a.Size(Size());
-		mint count = 0;
-		for(auto i: (*this))
-		{
-			a[count] = i;
-			count++;
-		}
-		return a;
-	}
-	
-	N& first()
-	{
-		return ref->h->n;
-	}
-	
-};
-
-
-template<class A, class B>
-class MapNode
-{
-	public:
-	A key;
-	B value;
-	MapNode<A, B> * left = 0;
-	MapNode<A, B> * right = 0;
-	
-};
-template<class A, class B>
-class Map 
-{
-	public:
-	MapNode<A, B> * h = 0;
-	
-	Map()
-	{
-	}
-	
-	
-	B & operator[](const A & a)
-	{
-		
-		if(h == 0)
-		{
-			h = new MapNode<A, B>;
-			h->key = a;
-			return h->value;
-		}
-		else
-		{
-			MapNode<A, B> * ptr = h;
-			while(true)
-			{
-				if(a < ptr->key)
-				{
-					if(ptr->left == 0)
-					{
-						ptr->left = new MapNode<A, B>;
-						ptr = ptr->left;
-						ptr->key = a;
-						return ptr->value;
-					}
-					ptr = ptr->left;
-					
-				}
-				else if(a > ptr->key)
-				{
-					if(ptr->right == 0)
-					{
-						ptr->right = new MapNode<A, B>;
-						ptr = ptr->right;
-						ptr->key = a;
-						return ptr->value;
-					}
-					ptr = ptr->right;
-					
-				}
-				else if( a == ptr->key)
-				{
-					return ptr->value;
-				}
-			}//end while
-		}//end else;
-	}//
-	
-	
-};
 
 
 
 
 
-
-
-
-
-
+#define where(C) whereDef([&]() -> mbool \
+{\
+	return C;\
+})
 
 template<class A>
 class Query1List
@@ -736,7 +138,6 @@ class Query1List
 };
 
 
-
 template<class A>
 Query1List<A> from(List<A> & alist, A * & aref)
 {
@@ -747,96 +148,297 @@ Query1List<A> from(List<A> & alist, A * & aref)
 
 
 
-#define where(C) whereDef([&]() -> mbool \
-{\
-	return C;\
-})
-
-
-/* other quiries
 template<class A, class B>
 class Query2List
 {
-	List<A> * al;
+	List<A> * alist;
 	A ** aref;
-	List<B> * bl;
+	
+	List<B> * blist;
 	B ** bref;
 	
 	function<mbool()> wherefunc;
 	
 	public:
-	Query2List(List<A>  & alist, A *& a, List<B> & blist,B *& b )
+	Query2List(List<A>  & al, A *& a, List<B> & bl, B*& b)
 	{
-		al = &alist;
+		alist = &al;
 		aref = &a;
-		bl = &blist;
+		
+		blist = &bl;
 		bref = &b;
 	}
-	Query2List<A, B> & where(function<mbool()> func)
+	Query2List<A, B> whereDef(function<mbool()> func)
 	{
 		wherefunc = func;
 		return (*this);
 	}
 	
-	void select(function<void()> func)
+	//=========start plain select function
+	void selectManyToMany(function<void()> func)
 	{
-		for(auto ia: (*al))
+		for(auto aa: (*alist))
 		{
-			(*aref) = &ia;
-			for(auto ib: (*bl))
+			(*aref) = &aa;
+			for(auto bb: (*blist))
 			{
-				(*bref) = &ib;
-				mbool b1 = wherefunc();
-				if(wherefunc())
+				(*bref) = &bb;
+				if( wherefunc())
 				{
 					func();
-					
 				}
-				
 			}
 		}
 	}
 	
-	template<class C>
-	List<C> select(function<C()> func)
+	void selectOneToMany(function<void()> func)
 	{
-		List<C> retc;
-		for(auto ia: (*al))
+		for(auto bb: (*blist))
 		{
-			(*aref) = &ia;
-			for(auto ib: (*bl))
+			(*bref) = &bb;
+			for(auto aa: (*alist))
 			{
-				(*bref) = &ib;
-				if(wherefunc())
+				(*aref) = &aa;
+				if( wherefunc())
 				{
-					retc.PushBack(func());
+					func();
+					break;
 				}
-				
 			}
 		}
-		return retc;
+	}
+	
+	void selectManyToOne(function<void()> func)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = &bb;
+				if( wherefunc())
+				{
+					func();
+					break;
+				}
+			}
+		}
+	}
+	
+	void selectOneToOne(function<void()> func)
+	{
+		//todo optimize by removing entries
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = &bb;
+				if( wherefunc())
+				{
+					func();
+					break;
+				}
+			}
+		}
+	}
+	
+	
+	//=========end plain select function
+	
+	//=========start List<A> select function
+	
+	
+	void selectManyToMany(List<A> & retlist)
+	{
+		selectOneToMany(retlist);
+	}
+	
+	void selectOneToMany(List<A> & retlist)
+	{
+		for(auto bb: (*blist))
+		{
+			(*bref) = &bb;
+			for(auto aa: (*alist))
+			{
+				(*bref) = & aa;
+				if( wherefunc())
+				{
+					retlist.PushBack(aa);
+					break;
+				}
+			}
+		}
+	}
+	
+	void selectManyToOne(List<A> & retlist)
+	{
+		selectOneToMany(retlist);
+	}
+	
+	
+	void selectOneToOne(List<A> & retlist)
+	{
+		//todo optimize by removing entries. 
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					retlist.PushBack(aa);
+					break;
+				}
+			}
+		}
+	}
+	
+	//=========end List<A> select function
+	//=========start List<B> select function
+	void selectManyToMany(List<B> & retlist)
+	{
+		selectManyToOne(retlist);
+	}
+	
+	void selectOneToMany(List<B> & retlist)
+	{
+		selectManyToOne(retlist);
+	}
+	
+	void selectManyToOne(List<B> & retlist)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					retlist.PushBack(bb);
+					break;
+				}
+			}
+		}
+	}
+	
+	void selectOneToOne(List<B> & retlist)
+	{
+		//todo optimize by removing entries. 
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					retlist.PushBack(aa);
+					break;
+				}
+			}
+		}
+	}
+	
+	
+	//=========end List<B> select function
+	//=========start List<C> select function
+	template<class C>
+	void selectManyToMany(List<C> & retlist)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb);
+					retlist.PushBack(c);
+				}
+			}
+		}
 	}
 	
 	template<class C>
-	void select()
+	void selectOneToMany(List<C> & retlist)
 	{
-		
+		for(auto bb: (*blist))
+		{
+			(*bref) = &bb;
+			for(auto aa: (*alist))
+			{
+				(*aref) = & aa;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
+	}
+	
+	template<class C>
+	void selectManyToOne(List<C> & retlist)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
+	}
+	
+	template<class C>
+	void selectOneToOne(List<C> & retlist)
+	{
+		//todo optimize by removing search entries. 
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
 	}
 	
 	
+	//=========end List<C> select function
 };
 
 
-
-
 template<class A, class B>
-Query2List<A, B> from(List<A> & al, A * &aref, List<B> & bl, B * & bref)
+Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
 {
-	return Query2List<A, B>(al, aref, bl, bref);
+	return Query2List<A, B>(alist, aref, blist, bref);
 }
 
 
-*/
+
+
 
 
 
@@ -874,11 +476,19 @@ Query2List<A, B> from(List<A> & al, A * &aref, List<B> & bl, B * & bref)
 		String street = "";
 		String zip = "";
 	};
+	
+	
+	struct addresscount
+	{
+		String name = "";
+		mint count = 1;
+		List<address> addresses;
+	};
+	
 
-int main()
+
+void makemapper()
 {
-	
-	
 	mapper<combo, person, address>([](combo & c, person & p, address & a)
 	{
 		StringBuffer buf;
@@ -906,35 +516,78 @@ int main()
 		
 	});
 	
+}
+
+
+int main()
+{
+	makemapper();
+	
 	
 	List<person> plist((person[]){
 		{0, "matt", "bob", 0},
-		{0, "tyson", "mike", 0},
-		{0, "bla", "blob", 0}
+		{0, "matt", "bob", 1},
+		{1, "tyson", "mike", 1},
+		{2, "bla", "blob", 2},
+		{3, "andrew", "blob", 0}
+	});
+	
+	List<address> alist((address[]){
+		{0, "123 elm street", "1234567"},
+		{1, "456 bla street", "4444444"},
+		{2, "88 ima street", "788"}
+		
 	});
 	
 	
+	List<combo> clist;
+	
+	
+	
 	{
+		address * a;
 		person * p;
-		List<person2> persons;
 		
-		from(plist, p)
-		.where(p->id == 0)
-		.select(persons);
+		from(plist, p, alist, a)
+		.where(p->addressid == a->id)
+		.selectManyToMany(clist);
 		
-		for(auto i: persons)
+		for(auto i: clist)
 		{
-			cout << i.name el;
+			
+			cout << "name " << i.name << " street: " << i.street << " zip "<<  i.zip el;
 		}
 		
-		List<person2> plist2;
+		map<mint, addresscount> counting;
 		
-		mapper(plist2, plist);
-		
-		for(auto i: persons)
+		from(plist, p, alist, a)
+		.where(p->addressid == a->id)
+		.selectManyToMany([&]()
 		{
-			cout << i.name el;
+			if ( counting.find(p->id) == counting.end() ) 
+			{
+				StringBuffer buff;
+				buff + p->first + " "  + p->last;
+				buff.ToString(counting[p->id].name);
+				counting[p->id].addresses.PushBack((*a));
+			} 
+			else 
+			{
+			  counting[p->id].count++;
+			  counting[p->id].addresses.PushBack((*a));
+			}
+		});
+		
+		for(auto i: counting)
+		{
+			cout << i.second.name << " " << i.second.count el;
+			for(auto a: i.second.addresses)
+			{
+				cout <<"# " << a.street << " " << a.zip el;
+			}
 		}
+		
+		
 	}
 	
 	

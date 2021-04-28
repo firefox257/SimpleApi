@@ -5,6 +5,31 @@
 #include "SmtPtr.hpp"
 
 template<class N>
+class List;
+
+
+template<class N>
+class ArrayArg
+{
+	public:
+	const N * data = 0;
+	mint size = 0;
+	
+	template<class A>
+	ArrayArg(const A & n)
+	{
+		TypeInfo t(n);
+		if(t.isArray)
+		{
+			data = n;
+			size = t.arraySize;
+		}
+	}
+	
+};
+
+
+template<class N>
 class ArrayData
 {
 	public:
@@ -67,6 +92,21 @@ class Array
 	
 	public:
 	
+	Array()
+	{
+	}
+	
+	
+	Array(ArrayArg<N> n)
+	{
+		mint s = n.size;
+		Size(s);
+		for(mint i = 0; i < s; i++)
+		{
+			ref->d[i] = n.data[i];
+		}
+		
+	}
 	
 	$cm(mint, Size, 
 	{
@@ -87,14 +127,32 @@ class Array
 		ref->Copy( (*(a.ref))   );
 	}
 	
-	typedef N * iterator;
-	typedef const N * const_iterator;
+	Array<N> & operator = (ArrayArg<N> & a)
+	{
+		ref.Release();
+		mint s = a.size;
+		Size(s);
+		for(mint i = 0; i < s; i++)
+		{
+			ref->d[i] = a.data[i];
+		}
+	}
 	
-	iterator begin()
+	operator List<N>()
+	{
+		List<N> ret;
+		for(auto i: (*this))
+		{
+			ret.PushBack(i);
+		}
+		return ret;
+	}		
+	
+	N * begin()
 	{
 		return &(ref->d[0]);
 	}
-	iterator end()
+	N * end()
 	{
 		mint s= Size();
 		return &(ref->d[s]);
@@ -131,6 +189,11 @@ class Array
 		return out;
 	}
 };
+
+
+
+
+
 
 
 

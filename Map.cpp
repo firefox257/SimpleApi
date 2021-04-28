@@ -5,48 +5,82 @@
 #include "Types.hpp"
 #include "DataIO.hpp"
 
-template <class K, class N>
-class Map: public map<K, N>
+
+template<class A, class B>
+class MapNode
 {
 	public:
-	
-	
-	friend DataOut & operator << (DataOut & out, Map<K, N> & ar)
-	{
-		out << (mulong)ar.size();
-		for(auto i: ar)
-		{
-			out << i.first;
-			out << i.second;
-		}
-		return out;
-	}
-	
-	friend DataIn & operator >> (DataIn & in, Map<K, N> & ar)
-	{
-		mulong size;
-		in >> size;
-		
-		for(mint i = 0; i < size; i++)
-		{
-			K k;
-			in >> k;
-			N n;
-			in >> n;
-			ar[k] =n;
-		}
-		return in;
-	}
-	
-	friend ostream & operator << (ostream & out , const Map<K, N> & n)
-	{
-		for(auto i: n)
-		{
-			out << "key: " <<(K)i.first << "\r\n";
-			out <<i.second << "\r\n";
-		}
-		return out;
-	}
+	A key;
+	B value;
+	MapNode<A, B> * left = 0;
+	MapNode<A, B> * right = 0;
 	
 };
+template<class A, class B>
+class Map 
+{
+	public:
+	MapNode<A, B> * h = 0;
+	
+	Map()
+	{
+	}
+	
+	
+	B & operator[](const A & a)
+	{
+		
+		if(h == 0)
+		{
+			h = new MapNode<A, B>;
+			h->key = a;
+			return h->value;
+		}
+		else
+		{
+			MapNode<A, B> * ptr = h;
+			while(true)
+			{
+				if(a < ptr->key)
+				{
+					if(ptr->left == 0)
+					{
+						ptr->left = new MapNode<A, B>;
+						ptr = ptr->left;
+						ptr->key = a;
+						return ptr->value;
+					}
+					ptr = ptr->left;
+					
+				}
+				else if(a > ptr->key)
+				{
+					if(ptr->right == 0)
+					{
+						ptr->right = new MapNode<A, B>;
+						ptr = ptr->right;
+						ptr->key = a;
+						return ptr->value;
+					}
+					ptr = ptr->right;
+					
+				}
+				else if( a == ptr->key)
+				{
+					return ptr->value;
+				}
+			}//end while
+		}//end else;
+	}//
+	
+	
+};
+
+
+
+
+
+
+
+
 #endif
