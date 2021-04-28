@@ -1,0 +1,1 @@
+g++ -std=c++17 All.cpp -shared -o SimpleApi.dll
