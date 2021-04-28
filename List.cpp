@@ -4,7 +4,7 @@
 #include <list>
 #include "Types.hpp"
 #include "DataIO.hpp"
-
+#include "Mapper.cpp"
 template<class N>
 class Array;
 

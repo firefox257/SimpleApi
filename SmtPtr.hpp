@@ -36,7 +36,7 @@ class SmtPtr
 		if((*count)<=0)
 		{
 			delete(n);
-			delete(n);
+			delete(count);
 		}
 		n = p.n;
 		count = p.count;

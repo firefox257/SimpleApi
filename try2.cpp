@@ -24,11 +24,6 @@ using namespace std;
 #define el << "\r\n"
 
 
-
-
-
-
-
 #define where(C) whereDef([&]() -> mbool \
 {\
 	return C;\
@@ -37,15 +32,15 @@ using namespace std;
 template<class A>
 class Query1List
 {
-	List<A> * l1;
-	A ** ref;
+	List<A> * alist;
+	A ** aref;
 	function<mbool()> wherefunc;
 	
 	public:
-	Query1List(List<A>  & l, A *& a)
+	Query1List(List<A>  & al, A *& a)
 	{
-		l1 = &l;
-		ref = &a;
+		alist = &al;
+		aref = &a;
 	}
 	Query1List<A> whereDef(function<mbool()> func)
 	{
@@ -54,9 +49,9 @@ class Query1List
 	}
 	void select(function<void()> func)
 	{
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				func();
@@ -66,9 +61,9 @@ class Query1List
 	
 	void select(List<A> & retlist)
 	{
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				retlist.PushBack(i);
@@ -81,9 +76,9 @@ class Query1List
 	void select(List<B> & retlist)
 	{
 		
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				B b;
@@ -93,12 +88,45 @@ class Query1List
 		}
 	}
 	
+	
+	template<class B, class C>
+	void select(List<B> & retlist, const C & c )
+	{
+		
+		for(auto i: (*alist))
+		{
+			(*aref) = &i;
+			if( wherefunc())
+			{
+				B b;
+				mapper(b, i, (C&)c);
+				retlist.PushBack(b);
+			}
+		}
+	}
+	template<class B, class C, class D>
+	void select(List<B> & retlist, const C & c , const D & d)
+	{
+		
+		for(auto i: (*alist))
+		{
+			(*aref) = &i;
+			if( wherefunc())
+			{
+				B b;
+				mapper(b, i, (C&)c, (D&)d);
+				retlist.PushBack(b);
+			}
+		}
+	}
+	
+	
 	void selectFirst(function<void()> func)
 	{
 		
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				func();
@@ -110,9 +138,9 @@ class Query1List
 	
 	void selectFirst( A & ret)
 	{
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				ret = i;
@@ -124,9 +152,9 @@ class Query1List
 	template<class B>
 	void selectFirst( B & ret)
 	{
-		for(auto i: (*l1))
+		for(auto i: (*alist))
 		{
-			(*ref) = &i;
+			(*aref) = &i;
 			if( wherefunc())
 			{
 				mapper(ret, i);
@@ -427,6 +455,92 @@ class Query2List
 	
 	
 	//=========end List<C> select function
+	//=========start List<C> const d select function
+	
+	template<class C, class D>
+	void selectManyToMany(List<C> & retlist, const D & d)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb, (D&)d);
+					retlist.PushBack(c);
+				}
+			}
+		}
+	}
+	
+	template<class C, class D>
+	void selectOneToMany(List<C> & retlist, const D & d)
+	{
+		for(auto bb: (*blist))
+		{
+			(*bref) = &bb;
+			for(auto aa: (*alist))
+			{
+				(*aref) = & aa;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb, (D&)d);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
+	}
+	
+	template<class C, class D>
+	void selectManyToOne(List<C> & retlist, const D & d)
+	{
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb, (D&)d);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
+	}
+	
+	template<class C, class D>
+	void selectOneToOne(List<C> & retlist, const D & d)
+	{
+		//todo optimize by removing search entries. 
+		for(auto aa: (*alist))
+		{
+			(*aref) = &aa;
+			for(auto bb: (*blist))
+			{
+				(*bref) = & bb;
+				if( wherefunc())
+				{
+					C c;
+					mapper(c, aa, bb, (D&)d);
+					retlist.PushBack(c);
+					break;
+				}
+			}
+		}
+	}
+	
+	
+	//=========end List<C> const d select function
+	
+	
 };
 
 
@@ -439,12 +553,23 @@ Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
 
 
 
+template<class A, class B>
+void AddListItem(List<A> & alist, B & b)
+{
+	A a;
+	mapper(a, b);
+	alist.PushBack(a);
+	
+}
 
-
-
-
-
-
+template<class A, class B, class C>
+void AddListItem(List<A> & alist, B & b, C & c)
+{
+	A a;
+	mapper(a, b, c);
+	alist.PushBack(a);
+	
+}
 
 
 
@@ -455,7 +580,6 @@ Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
 		mint id = -1;
 		String first = "";
 		String last = "";
-		mint addressid = -1;
 	};
 	
 	struct person2
@@ -468,6 +592,13 @@ Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
 		mint id = -1;
 		String street = "";
 		String zip = "";
+	};
+	
+	
+	struct personaddress
+	{
+		mint personid = -1;
+		mint addressid = -1;
 	};
 	
 	struct combo
@@ -484,6 +615,36 @@ Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
 		mint count = 1;
 		List<address> addresses;
 	};
+	
+	struct invoice
+	{
+		mint id = -1;
+		mint personid = -1;
+		String line = "";
+	};
+	
+	struct invoiceitem
+	{
+		mint id = -1;
+		mint invoiceid = -1;
+		String item = "";
+		
+	};
+
+	
+	struct personinvoice
+	{
+		String name = "";
+		struct invoice
+		{
+			String line = "";
+			List<String> items;
+			
+		};
+		List<personinvoice::invoice> invoices;
+	};
+	
+	
 	
 
 
@@ -516,27 +677,60 @@ void makemapper()
 		
 	});
 	
+	mapper<personinvoice, person>([](personinvoice & pi, person & p)
+	{
+		
+		StringBuffer buff;
+		buff + p.first + " " + p.last;
+		buff.ToString(pi.name);
+	});
+	
+	mapper<personinvoice::invoice, invoice>([](personinvoice::invoice & pinv, invoice & inv)
+	{
+		pinv.line = inv.line;
+	});
+	
+	mapper<String, invoiceitem>([](String & str, invoiceitem & item)
+	{
+		str = item.item;
+	});
 }
 
 
+void func(personinvoice & pi)
+{
+	
+	pi.invoices.PushBack(personinvoice::invoice());
+}
+
 int main()
 {
+	
+
+	
+	
 	makemapper();
 	
 	
 	List<person> plist((person[]){
-		{0, "matt", "bob", 0},
-		{0, "matt", "bob", 1},
-		{1, "tyson", "mike", 1},
-		{2, "bla", "blob", 2},
-		{3, "andrew", "blob", 0}
+		{0, "matt", "bob"},
+		{1, "tyson", "mike"},
+		{2, "bla", "blob"},
+		{3, "andrew", "blob"}
 	});
 	
 	List<address> alist((address[]){
 		{0, "123 elm street", "1234567"},
 		{1, "456 bla street", "4444444"},
 		{2, "88 ima street", "788"}
-		
+	});
+	
+	List<personaddress> palist((personaddress[]){
+		{0, 0},
+		{0, 1},
+		{1, 1},
+		{2, 2},
+		{3, 0}
 	});
 	
 	
@@ -544,51 +738,59 @@ int main()
 	
 	
 	
+	
+	
+	List<invoice> ilist((invoice[]){
+		{0, 0, "magic tickets"},
+		{1, 1, "water show"}
+	});
+	
+	List<invoiceitem> itlist((invoiceitem[]){
+		{0, 0, "2 adults $7.95"},
+		{1, 0, "matic wand free"}
+	});
+	
+	
+	personinvoice piv;
 	{
-		address * a;
+		
 		person * p;
-		
-		from(plist, p, alist, a)
-		.where(p->addressid == a->id)
-		.selectManyToMany(clist);
-		
-		for(auto i: clist)
+		invoice * inv;
+		invoiceitem * invitem;
+		from(plist, p)
+		.where(p->first == "matt")
+		.selectFirst([&]()
+		{
+			mapper(piv, (*p));
+			
+			from(ilist, inv)
+			.where(inv->personid == p->id)
+			.select([&]()
+			{
+				personinvoice::invoice inv1;
+				mapper(inv1, (*inv));
+				from(itlist, invitem)
+				.where(invitem->invoiceid == inv->id)
+				.select(inv1.items);
+				piv.invoices.PushBack(inv1);
+				
+			});
+			
+		});
+	}
+	
+	
+	cout << piv.name el;
+	for(auto a: piv.invoices)
+	{
+		cout << "\t" << a.line el;
+		for(auto b: a.items)
 		{
 			
-			cout << "name " << i.name << " street: " << i.street << " zip "<<  i.zip el;
+			cout << "\t\t" << b el;
 		}
-		
-		map<mint, addresscount> counting;
-		
-		from(plist, p, alist, a)
-		.where(p->addressid == a->id)
-		.selectManyToMany([&]()
-		{
-			if ( counting.find(p->id) == counting.end() ) 
-			{
-				StringBuffer buff;
-				buff + p->first + " "  + p->last;
-				buff.ToString(counting[p->id].name);
-				counting[p->id].addresses.PushBack((*a));
-			} 
-			else 
-			{
-			  counting[p->id].count++;
-			  counting[p->id].addresses.PushBack((*a));
-			}
-		});
-		
-		for(auto i: counting)
-		{
-			cout << i.second.name << " " << i.second.count el;
-			for(auto a: i.second.addresses)
-			{
-				cout <<"# " << a.street << " " << a.zip el;
-			}
-		}
-		
-		
 	}
+	
 	
 	
 	return 0;

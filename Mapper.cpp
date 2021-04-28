@@ -68,6 +68,10 @@ void mapper(A & a, B & b, C & c)
 	{
 		MapperObject<A, C, B>::call(a, c, b);
 	}
+	else
+	{
+		//cout << "no mapper" el;
+	}
 }
 
 
