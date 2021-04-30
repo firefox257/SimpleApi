@@ -26,30 +26,9 @@ using namespace std;
 
 
 
-struct try1
-{
-	List<String> names;
-	
-};
 
-void func(SmtPtr<try1> & t1)
-{
-	cout << "here4" el;
-	SmtPtr<try1> t2;
-	cout << "here5" el;
-	t2->names.PushBack((String)"hi there");
-	t2->names.PushBack((String)"hi there123");
-	cout << "here6 " el;
-	t1 = t2;
-	cout << "here7" el;
-	
-}
 int main()
 {
-	cout << "here1" el;
-	SmtPtr<try1> t1;
-	cout << "here2" el;
-	func(t1);
-	cout << "here3" el;
+	
 	return 0;
 }

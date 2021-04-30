@@ -24,140 +24,136 @@ using namespace std;
 #define el << "\r\n"
 
 
-#define where(C) whereDef([&]() -> mbool \
-{\
-	return C;\
-})
+
+template<int A>
+class CharArray
+{
+	mchar data[A];
+	
+	public:
+	CharArray()
+	{
+		data[0] = 0;
+	}
+	
+	CharArray(const mchar * d)
+	{
+		mint at = 0;
+		while(d[at] != 0 && at <= A)
+		{
+			data[at] = d[at];
+			at++;
+		}
+		data[at] = 0;
+	}
+	CharArray(mchar * d)
+	{
+		mint at = 0;
+		while(d[at] != 0 && at <= A)
+		{
+			data[at] = d[at];
+			at++;
+		}
+		data[at] = 0;
+	}
+	CharArray(String & str)
+	{
+		mint ss = str.Size();
+		if(ss > A) ss = A;
+		mchar * strc = str.cstr();
+		for(mint i = 0; i < ss; i++)
+		{
+			
+			data[i] = strc[i];
+		}
+		data[ss] = 0;
+	}
+	
+	mint Size()
+	{
+		return A;
+	}
+	operator mchar *()
+	{
+		return data;
+	}
+	
+	CharArray<A> & operator = (const mchar * d)
+	{
+		mint at = 0;
+		while(d[at] != 0 && at <= A)
+		{
+			data[at] = d[at];
+			at++;
+		}
+		data[at] = 0;
+		return (*this);
+	}
+	CharArray<A> & operator = (mchar * d)
+	{
+		mint at = 0;
+		while(d[at] != 0 && at <= A)
+		{
+			data[at] = d[at];
+			at++;
+		}
+		data[at] = 0;
+		reutrn (*this);
+	}
+	CharArray<A> & operator = (String & str)
+	{
+		
+		mint ss = str.Size();
+		if(ss > A) ss = A;
+		mchar * strc = str.cstr();
+		for(mint i = 0; i < ss; i++)
+		{
+			
+			data[i] = strc[i];
+		}
+		data[ss] = 0;
+	}
+	
+};
+
+
+
+
 
 template<class A>
 class Query1List
 {
 	List<A> * alist;
-	A ** aref;
-	function<mbool()> wherefunc;
+	function<mbool(A&)> wherefunc;
 	
 	public:
-	Query1List(List<A>  & al, A *& a)
+	Query1List(List<A>  & al)
 	{
 		alist = &al;
-		aref = &a;
 	}
-	Query1List<A> whereDef(function<mbool()> func)
+	Query1List<A> where(function<mbool(A&)> func)
 	{
 		wherefunc = func;
 		return (*this);
 	}
-	void select(function<void()> func)
+	void select(function<void(A&)> func)
 	{
-		for(auto i: (*alist))
+		for(auto a: (*alist))
 		{
-			(*aref) = &i;
-			if( wherefunc())
+			if( wherefunc(a))
 			{
-				func();
+				func(a);
 			}
 		}
 	}
 	
-	void select(List<A> & retlist)
+	void selectFirst(function<void(A&)> func)
 	{
-		for(auto i: (*alist))
+		for(auto a: (*alist))
 		{
-			(*aref) = &i;
-			if( wherefunc())
+			if( wherefunc(a))
 			{
-				retlist.PushBack(i);
-			}
-		}
-	}
-	
-	
-	template<class B>
-	void select(List<B> & retlist)
-	{
-		
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				B b;
-				mapper(b, i);
-				retlist.PushBack(b);
-			}
-		}
-	}
-	
-	
-	template<class B, class C>
-	void select(List<B> & retlist, const C & c )
-	{
-		
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				B b;
-				mapper(b, i, (C&)c);
-				retlist.PushBack(b);
-			}
-		}
-	}
-	template<class B, class C, class D>
-	void select(List<B> & retlist, const C & c , const D & d)
-	{
-		
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				B b;
-				mapper(b, i, (C&)c, (D&)d);
-				retlist.PushBack(b);
-			}
-		}
-	}
-	
-	
-	void selectFirst(function<void()> func)
-	{
-		
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				func();
-				return;
-			}
-		}
-	}
-	
-	
-	void selectFirst( A & ret)
-	{
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				ret = i;
-				return;
-			}
-		}
-	}
-	
-	template<class B>
-	void selectFirst( B & ret)
-	{
-		for(auto i: (*alist))
-		{
-			(*aref) = &i;
-			if( wherefunc())
-			{
-				mapper(ret, i);
+				func(a);
 				return;
 			}
 		}
@@ -167,9 +163,9 @@ class Query1List
 
 
 template<class A>
-Query1List<A> from(List<A> & alist, A * & aref)
+Query1List<A> from(List<A> & alist)
 {
-	return Query1List<A>(alist, aref);
+	return Query1List<A>(alist);
 }
 
 
@@ -180,381 +176,105 @@ template<class A, class B>
 class Query2List
 {
 	List<A> * alist;
-	A ** aref;
+	//A ** aref;
 	
 	List<B> * blist;
-	B ** bref;
+	//B ** bref;
 	
-	function<mbool()> wherefunc;
+	function<mbool(A&, B &)> wherefunc;
 	
 	public:
-	Query2List(List<A>  & al, A *& a, List<B> & bl, B*& b)
+	Query2List(List<A>  & al, List<B> & bl)
 	{
 		alist = &al;
-		aref = &a;
+		//aref = &a;
 		
 		blist = &bl;
-		bref = &b;
+		//bref = &b;
 	}
-	Query2List<A, B> whereDef(function<mbool()> func)
+	Query2List<A, B> where(function<mbool(A &, B &)> func)
 	{
 		wherefunc = func;
 		return (*this);
 	}
 	
 	//=========start plain select function
-	void selectManyToMany(function<void()> func)
+	void selectManyToMany(function<void(A&, B&)> func)
 	{
 		for(auto aa: (*alist))
 		{
-			(*aref) = &aa;
+			//(*aref) = &aa;
 			for(auto bb: (*blist))
 			{
-				(*bref) = &bb;
-				if( wherefunc())
+				//(*bref) = &bb;
+				if( wherefunc(aa, bb))
 				{
-					func();
+					func(aa, bb);
 				}
 			}
 		}
 	}
 	
-	void selectOneToMany(function<void()> func)
+	void selectOneToMany(function<void(A&, B&)> func)
 	{
 		for(auto bb: (*blist))
 		{
-			(*bref) = &bb;
 			for(auto aa: (*alist))
 			{
-				(*aref) = &aa;
-				if( wherefunc())
+				if( wherefunc(aa, bb))
 				{
-					func();
+					func(aa, bb);
 					break;
 				}
 			}
 		}
 	}
 	
-	void selectManyToOne(function<void()> func)
+	void selectManyToOne(function<void(A &, B &)> func)
 	{
 		for(auto aa: (*alist))
 		{
-			(*aref) = &aa;
 			for(auto bb: (*blist))
 			{
-				(*bref) = &bb;
-				if( wherefunc())
+				if( wherefunc(aa, bb))
 				{
-					func();
+					func(aa, bb);
 					break;
 				}
 			}
 		}
 	}
 	
-	void selectOneToOne(function<void()> func)
+	void selectOneToOne(function<void(A&, B&)> func)
 	{
 		//todo optimize by removing entries
 		for(auto aa: (*alist))
 		{
-			(*aref) = &aa;
 			for(auto bb: (*blist))
 			{
-				(*bref) = &bb;
-				if( wherefunc())
+				if( wherefunc(aa, bb))
 				{
-					func();
+					func(aa, bb);
 					break;
 				}
 			}
 		}
 	}
-	
-	
-	//=========end plain select function
-	
-	//=========start List<A> select function
-	
-	
-	void selectManyToMany(List<A> & retlist)
-	{
-		selectOneToMany(retlist);
-	}
-	
-	void selectOneToMany(List<A> & retlist)
-	{
-		for(auto bb: (*blist))
-		{
-			(*bref) = &bb;
-			for(auto aa: (*alist))
-			{
-				(*bref) = & aa;
-				if( wherefunc())
-				{
-					retlist.PushBack(aa);
-					break;
-				}
-			}
-		}
-	}
-	
-	void selectManyToOne(List<A> & retlist)
-	{
-		selectOneToMany(retlist);
-	}
-	
-	
-	void selectOneToOne(List<A> & retlist)
-	{
-		//todo optimize by removing entries. 
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					retlist.PushBack(aa);
-					break;
-				}
-			}
-		}
-	}
-	
-	//=========end List<A> select function
-	//=========start List<B> select function
-	void selectManyToMany(List<B> & retlist)
-	{
-		selectManyToOne(retlist);
-	}
-	
-	void selectOneToMany(List<B> & retlist)
-	{
-		selectManyToOne(retlist);
-	}
-	
-	void selectManyToOne(List<B> & retlist)
-	{
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					retlist.PushBack(bb);
-					break;
-				}
-			}
-		}
-	}
-	
-	void selectOneToOne(List<B> & retlist)
-	{
-		//todo optimize by removing entries. 
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					retlist.PushBack(aa);
-					break;
-				}
-			}
-		}
-	}
-	
-	
-	//=========end List<B> select function
-	//=========start List<C> select function
-	template<class C>
-	void selectManyToMany(List<C> & retlist)
-	{
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb);
-					retlist.PushBack(c);
-				}
-			}
-		}
-	}
-	
-	template<class C>
-	void selectOneToMany(List<C> & retlist)
-	{
-		for(auto bb: (*blist))
-		{
-			(*bref) = &bb;
-			for(auto aa: (*alist))
-			{
-				(*aref) = & aa;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	template<class C>
-	void selectManyToOne(List<C> & retlist)
-	{
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	template<class C>
-	void selectOneToOne(List<C> & retlist)
-	{
-		//todo optimize by removing search entries. 
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	
-	//=========end List<C> select function
-	//=========start List<C> const d select function
-	
-	template<class C, class D>
-	void selectManyToMany(List<C> & retlist, const D & d)
-	{
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb, (D&)d);
-					retlist.PushBack(c);
-				}
-			}
-		}
-	}
-	
-	template<class C, class D>
-	void selectOneToMany(List<C> & retlist, const D & d)
-	{
-		for(auto bb: (*blist))
-		{
-			(*bref) = &bb;
-			for(auto aa: (*alist))
-			{
-				(*aref) = & aa;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb, (D&)d);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	template<class C, class D>
-	void selectManyToOne(List<C> & retlist, const D & d)
-	{
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb, (D&)d);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	template<class C, class D>
-	void selectOneToOne(List<C> & retlist, const D & d)
-	{
-		//todo optimize by removing search entries. 
-		for(auto aa: (*alist))
-		{
-			(*aref) = &aa;
-			for(auto bb: (*blist))
-			{
-				(*bref) = & bb;
-				if( wherefunc())
-				{
-					C c;
-					mapper(c, aa, bb, (D&)d);
-					retlist.PushBack(c);
-					break;
-				}
-			}
-		}
-	}
-	
-	
-	//=========end List<C> const d select function
-	
 	
 };
 
 
 template<class A, class B>
-Query2List<A, B> from(List<A> & alist, A * & aref, List<B> & blist, B *& bref)
+Query2List<A, B> from(List<A> & alist, List<B> & blist)
 {
-	return Query2List<A, B>(alist, aref, blist, bref);
+	return Query2List<A, B>(alist, blist);
 }
 
 
 
 
 template<class A, class B>
-void AddListItem(List<A> & alist, B & b)
+void joinList(List<A> & alist, B & b)
 {
 	A a;
 	mapper(a, b);
@@ -563,7 +283,7 @@ void AddListItem(List<A> & alist, B & b)
 }
 
 template<class A, class B, class C>
-void AddListItem(List<A> & alist, B & b, C & c)
+void joinList(List<A> & alist, B & b, C & c)
 {
 	A a;
 	mapper(a, b, c);
@@ -571,7 +291,12 @@ void AddListItem(List<A> & alist, B & b, C & c)
 	
 }
 
-
+#define query(F, A, W, WC, S, SC)\
+F.W([&]A -> mbool\
+{\
+	return WC;\
+})\
+.S([&]A SC)
 
 
 
@@ -750,46 +475,84 @@ int main()
 		{1, 0, "matic wand free"}
 	});
 	
-	
-	personinvoice piv;
 	{
 		
-		person * p;
-		invoice * inv;
-		invoiceitem * invitem;
-		from(plist, p)
-		.where(p->first == "matt")
-		.selectFirst([&]()
+		
+		
+		List<combo>clist;
+		
+		query(from(plist, palist), (auto p, auto pa), 
+		where, p.id == pa.personid, 
+		selectOneToMany, 
 		{
-			mapper(piv, (*p));
 			
-			from(ilist, inv)
-			.where(inv->personid == p->id)
-			.select([&]()
+			query(from(alist), (auto a), 
+			where, a.id == pa.addressid,
+			selectFirst,
 			{
-				personinvoice::invoice inv1;
-				mapper(inv1, (*inv));
-				from(itlist, invitem)
-				.where(invitem->invoiceid == inv->id)
-				.select(inv1.items);
-				piv.invoices.PushBack(inv1);
+				joinList(clist, p, a);
 				
 			});
 			
-		});
-	}
-	
-	
-	cout << piv.name el;
-	for(auto a: piv.invoices)
-	{
-		cout << "\t" << a.line el;
-		for(auto b: a.items)
-		{
 			
-			cout << "\t\t" << b el;
+		});
+		
+		
+		cout << clist.Size() el;
+		for(auto i: clist)
+		{
+			cout << i.name << " " << i.street << " " << i.zip el;
+		}
+		cout << "================================" el;
+		
+		
+		List<personinvoice> pilist;
+		query(from(plist, ilist), (auto p, auto inv),
+		where, p.id == inv.personid,
+		selectOneToOne,
+		{
+			personinvoice pi1;
+			mapper(pi1, p);
+			
+			query(from(ilist), (auto inv1),
+			where, inv1.personid == p.id,
+			select,
+			{
+				personinvoice::invoice inv2;
+				mapper(inv2, inv1);
+				
+				query(from(itlist), (auto item),
+				where, item.invoiceid == inv1.id,
+				select,
+				{
+					joinList(inv2.items, item);
+					
+				});
+				
+				pi1.invoices.PushBack(inv2);
+				
+			});
+			
+			pilist.PushBack(pi1);
+		});
+		
+		
+		for(auto a: pilist)
+		{
+			cout << a.name el;
+			for(auto b: a.invoices)
+			{
+				cout << "\t" << b.line el;
+				for(auto c: b.items)
+				{
+					
+					cout << "\t\t" << c el;
+				}
+			}
 		}
 	}
+	
+	
 	
 	
 	
