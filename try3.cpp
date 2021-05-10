@@ -20,101 +20,120 @@
 #include "Async.cpp"
 #include "SmtPtr.hpp"
 #include "Mapper.cpp"
+#include "Factory.cpp"
+
 using namespace std;
 #define el << "\r\n"
 
 
-template<class N>
-class Factory
+
+/*
+
+template<class ...Args>
+class MapperObject
 {
+	static function<void(Args & ...)>  * mapfunc;
 	public:
-	N * n = 0;
-	mint * count = 0;
-	mbool * isStatic = 0;
-	
-	
-	Factory(N * atn, mbool isstatic = false)
+	static void set(function<void (Args & ...)> func)
 	{
-		n = atn;
-		count = new mint;
-		(*count) = 1;
-		isStatic = new mbool;
-		(*isStatic) = isstatic;
-		//cout << "facotry init" el;
-	}
-	Factory(const Factory<N> & p)
-	{
-		n = p.n;
-		count = p.count;
-		(*count)++;
-		isStatic = p.isStatic;
-		//cout << "copy constructor factory" el;
-	}
-	~Factory()
-	{
-		(*count)--;
-		if((*count) <=0)
+		if(mapfunc != 0)
 		{
-			//cout <<"delete facotry " el;
-			if(!(*isStatic)) delete(n);
-			delete(count);
-			delete(isStatic);
+			delete(mapfunc);
 		}
+		mapfunc = new function<void (Args & ...)>;
+		(*mapfunc) = func;
 	}
-	Factory<N> & operator=(const Factory<N> & p)
+	static void call(Args & ... args)
 	{
-		(*count)--;
-		if((*count)<=0)
-		{
-			if(!(*isStatic)) delete(n);
-			delete(count);
-			delete(isStatic);
-		}
-		n = p.n;
-		count = p.count;
-		(*count)++;
-		return (*this);
+		(*mapfunc)(args...);
 	}
-	N* operator->()
+	static mbool has()
 	{
-		return n;
-	}
-	
-	N& operator *()
-	{
-		return (*n);
+		return mapfunc != 0;
 	}
 	
 };
+template<class ... Args>
+function<void(Args & ...)> * MapperObject<Args...>::mapfunc = 0;
 
-//Ctodo change out to Map.
-struct FactoryNode
+template<class A, class B>
+void mapper(function<void(A & a, B & b)> func)
 {
-	function<void *()> callout;
-	mbool isStatic = false;
+	MapperObject<A, B>::set(func);
+}
+
+
+template<class A, class B, class C>
+void mapper(function<void(A & a, B & b, C & c)> func)
+{
+	MapperObject<A, B, C>::set(func);
+}
+
+template<class A, class B, class C, class D>
+void mapper(function<void(A & a, B & b, C & c, D & d)> func)
+{
+	MapperObject<A, B, C, D>::set(func);
+}
+
+
+template<class A, class B>
+void mapper(A & a, B & b)
+{
+	if(MapperObject<A, B>::has())
+	{
+		MapperObject<A, B>::call(a, b);
+	}
+}
+
+template<class A, class B, class C>
+void mapper(A & a, B & b, C & c)
+{
+	if(MapperObject<A, B, C>::has())
+	{
+		MapperObject<A, B, C>::call(a, b, c);
+	}
+	else if(MapperObject<A, C, B>::has())
+	{
+		MapperObject<A, C, B>::call(a, c, b);
+	}
+	else
+	{
+		//cout << "no mapper" el;
+	}
+}
+
+
+template<class A, class B, class C, class D>
+void mapper(A & a, B & b, C & c, D & d)
+{
+	if(MapperObject<A, B, C, D>::has())
+	{
+		MapperObject<A, B, C, D>::call(a, b, c, d);
+	}
+	else if(MapperObject<A, B, D, C>::has())
+	{
+		MapperObject<A, B, D, C>::call(a, b, d, c);
+	}
+	else if(MapperObject<A, C, B, D>::has())
+	{
+		MapperObject<A, C, B, D>::call(a, c, b, d);
+	}
+	else if(MapperObject<A, C, D, B>::has())
+	{
+		MapperObject<A, C, D, B>::call(a, c, d, b);
+	}
+	else if(MapperObject<A, D, C, B>::has())
+	{
+		MapperObject<A, D, C, B>::call(a, d, c, b);
+	}
 	
-};
-map<mulong, FactoryNode> globalFactoryMap;
-
-
-template<class A>
-void factory(function<void*()> func, mbool isstatic)
-{
-	static const mulong id = GetClassId<A>();
-	globalFactoryMap[id] = {func, isstatic};
 }
 
-template<class A>
-Factory<A> factory()
+template<class ... Args>
+void mapperhas()
 {
-	static const mulong id = GetClassId<A>();
-	static function<void*()> func = globalFactoryMap[id].callout;
-	static mbool isstatic = globalFactoryMap[id].isStatic;
-	return Factory<A>((A*)func(), isstatic);
+	return MapperObject<Args ...>::has();
 }
-
-
-
 
 
 
@@ -129,21 +148,129 @@ class try1
 	}
 };
 
+*/
+
+template<class ...Args>
+struct MapperObject
+{
+	void * callout = 0;
+};
+
+map<mulong, MapperObject> mapperObjectMap;
+
+
+
+
+template<class A, class B>
+void mapper(function<void(A & a, B & b)> func)
+{
+	static mulong id = GetClassId<MapperObject<A, B>>();
+	mapperObjectMap[id] = &func;
+	//MapperObject<A, B>::set(func);
+}
+
+
+template<class A, class B, class C>
+void mapper(function<void(A & a, B & b, C & c)> func)
+{
+	static mulong id = GetClassId<MapperObject<A, B, C>>();
+	mapperObjectMap[id] = &func;
+	//MapperObject<A, B, C>::set(func);
+}
+
+template<class A, class B, class C, class D>
+void mapper(function<void(A & a, B & b, C & c, D & d)> func)
+{
+	static mulong id = GetClassId<MapperObject<A, B, C, D>>();
+	mapperObjectMap[id] = &func;
+	//MapperObject<A, B, C, D>::set(func);
+}
+
+
+template<class A, class B>
+void mapper(A & a, B & b)
+{
+	static mulong id = GetClassId<MapperObject<A, B>>();
+	if(mapperObjectMap[id].callout != 0)
+	{
+		(*(function<void(A &, B &)>*)mapperObjectMap[id].callout)(a, b);
+		//MapperObject<A, B>::call(a, b);
+	}
+}
+
+template<class A, class B, class C>
+void mapper(A & a, B & b, C & c)
+{
+	static mulong id1 = GetClassId<MapperObject<A, B, C>>();
+	static mulong id2 = GetClassId<MapperObject<A, C, B>>();
+	if(mapperObjectMap[id1].callout != 0)
+	{
+		//MapperObject<A, B, C>::call(a, b, c);
+		(*(function<void(A &, B &, C &)>*)mapperObjectMap[id].callout)(a, b, c);
+	}
+	else if(mapperObjectMap[id2].callout != 0)//MapperObject<A, C, B>::has())
+	{
+		//MapperObject<A, C, B>::call(a, c, b);
+		(*(function<void(A &, C &, B &)>*)mapperObjectMap[id].callout)(a, c, b);
+	}
+	else
+	{
+		//cout << "no mapper" el;
+	}
+}
+
+
+template<class A, class B, class C, class D>
+void mapper(A & a, B & b, C & c, D & d)
+{
+	static mulong id1 = GetClassId<MapperObject<A, B, C, D>>();
+	static mulong id2 = GetClassId<MapperObject<A, B, D, C>>();
+	static mulong id3 = GetClassId<MapperObject<A, C, B, D>>();
+	static mulong id4 = GetClassId<MapperObject<A, C, D, B>>();
+	static mulong id5 = GetClassId<MapperObject<A, D, B, C>>();
+	static mulong id6 = GetClassId<MapperObject<A, D, C, B>>();
+	
+	if(MapperObject<A, B, C, D>::has())
+	{
+		MapperObject<A, B, C, D>::call(a, b, c, d);
+	}
+	else if(MapperObject<A, B, D, C>::has())
+	{
+		MapperObject<A, B, D, C>::call(a, b, d, c);
+	}
+	else if(MapperObject<A, C, B, D>::has())
+	{
+		MapperObject<A, C, B, D>::call(a, c, b, d);
+	}
+	else if(MapperObject<A, C, D, B>::has())
+	{
+		MapperObject<A, C, D, B>::call(a, c, d, b);
+	}
+	else if(MapperObject<A, D, B, C>::has())
+	{
+		MapperObject<A, D, B, C>::call(a, d, b, c);
+	}
+	else if(MapperObject<A, D, C, B>::has())
+	{
+		MapperObject<A, D, C, B>::call(a, d, c, b);
+	}
+	
+}
+
+template<class ... Args>
+void mapperhas()
+{
+	return MapperObject<Args ...>::has();
+}
+
+
 
 
 int main()
 {
 	
-	factory<try1>([]()-> void *
-	{
-		static try1 t1;
-		return &t1;
-	}, true);
-	
-	
-	
-	auto t1 = factory<try1>();
-	t1->func();
 	
 	return 0;
 }
+
+

@@ -10,7 +10,7 @@
 using namespace std;
 
 
-class StringBuffer;
+	class StringBuffer;
 
 	mulong String::getsize(mchar * str)
 	{

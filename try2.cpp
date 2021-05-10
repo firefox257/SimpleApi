@@ -372,7 +372,7 @@ F.W([&]A -> mbool\
 	
 	
 
-
+/*
 void makemapper()
 {
 	mapper<combo, person, address>([](combo & c, person & p, address & a)
@@ -421,7 +421,7 @@ void makemapper()
 	});
 }
 
-
+*/
 void func(personinvoice & pi)
 {
 	
@@ -432,9 +432,50 @@ int main()
 {
 	
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	List<String> list1;
+	for(int i = 0; i < 50000000; i++)
+	{
+		StringBuffer buff;
+		buff + "try" + i;
+		String str1;
+		buff.ToString(str1);
+		
+		list1.PushBack(str1);
+	}
+	
+	cout << "start" el;
 	
 	
-	makemapper();
+	query(from(list1), (auto l),
+	where, l =="try49999999",
+	selectFirst,
+	{
+		
+		cout << l el;
+	});
+	
+	/*makemapper();
 	
 	
 	List<person> plist((person[]){
@@ -552,7 +593,7 @@ int main()
 		}
 	}
 	
-	
+	*/
 	
 	
 	

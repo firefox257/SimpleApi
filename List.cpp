@@ -5,6 +5,9 @@
 #include "Types.hpp"
 #include "DataIO.hpp"
 #include "Mapper.cpp"
+//do not use since this implementation is very slow. use vector. 
+
+
 template<class N>
 class Array;
 

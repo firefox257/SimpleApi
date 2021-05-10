@@ -1,6 +1,11 @@
 #ifndef MAPPER_CPP
 #define MAPPER_CPP
+
+/*
+
 #include <functional>
+
+
 template<class ...Args>
 class MapperObject
 {
@@ -108,7 +113,7 @@ void mapperhas()
 }
 
 
-
+*/
 
 
 

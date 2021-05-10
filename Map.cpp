@@ -4,7 +4,7 @@
 #include <map>
 #include "Types.hpp"
 #include "DataIO.hpp"
-
+////do no use unordered_map is much faster since it is a hash table. 
 
 template<class A, class B>
 class MapNode
