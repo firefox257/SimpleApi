@@ -14,9 +14,15 @@ typedef uint32_t muint;
 typedef int32_t mint;
 typedef uint64_t mulong;
 typedef int64_t mlong;
+
+
 typedef float mfloat;
 typedef double mdouble;
 
+//extended types
+typedef unsigned __int128 mquint;
+typedef __int128 mqint;
+typedef __float128 quad;
 
 class TypeInfo
 {
