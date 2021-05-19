@@ -1126,17 +1126,94 @@ _PROD18(I + 1)
 		
 		if(digi >= 19)
 		{
+			dd /= FLOATPOWCONST[at2];
+			muchar c = (muchar)dd;
+			d[size] = getNumChar(c);
+			dd -= c;
+			dd *=10;
+			size++;
+			d[size] = '.';
+			size++;
 			
+			for(mint i = 0; i < 4 && dd != 0; i++)
+			{
+				muchar c = (muchar)dd;
+				d[size] = getNumChar(c);
+				dd -= c;
+				dd *=10;
+				size++;
+			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				
+				muchar c2 = (muchar)dd;
+				dd -= c2;
+				dd *= 10;
+				if(c2 >=5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
 			
+			d[size] = 'e';
+			size++;
+			
+			mint size1 = 0;
+			ToCstr(d +  size, size1, digi);
+			size += size1;
+			d[size] = 0;
 		}
 		else if (digi <= -6)
 		{
+			dd /= FLOATPOWCONST[at2];
+			muchar c = (muchar)dd;
+			d[size] = getNumChar(c);
+			dd -= c;
+			dd *=10;
+			size++;
+			d[size] = '.';
+			size++;
+			
+			for(mint i = 0; i < 4 && dd != 0; i++)
+			{
+				muchar c = (muchar)dd;
+				d[size] = getNumChar(c);
+				dd -= c;
+				dd *=10;
+				size++;
+			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				
+				muchar c2 = (muchar)dd;
+				dd -= c2;
+				dd *= 10;
+				if(c2 >=5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
+			
+			d[size] = 'e';
+			size++;
+			
+			d[size] = '-';
+			size++;
+			
+			digi *= -1;
+			mint size1 = 0;
+			ToCstr(d +  size, size1, digi);
+			size += size1;
+			d[size] = 0;
+			
 			
 		}
 		else
 		{
-			
-			//dd /= FLOATPOWCONST[at2];
 			
 			mulong n = (mulong) dd;
 			mint size1; 
@@ -1144,15 +1221,6 @@ _PROD18(I + 1)
 			size += size1;
 			dd -= n;
 			dd *=10;
-			/*
-			for(mint i = 0; i <= digi; i++)
-			{
-				muchar c = (muchar)dd;
-				d[size] = getNumChar(c);
-				dd -= c;
-				dd *=10;
-				size++;
-			}*/
 			
 			if(dd != 0) 
 			{
@@ -1160,7 +1228,7 @@ _PROD18(I + 1)
 				size++;
 			}
 			
-			for(mint i = 0; i < 6 && dd != 0; i++)//while(dd != 0)
+			for(mint i = 0; i < 4 && dd != 0; i++)//while(dd != 0)
 			{
 				muchar c = (muchar)dd;
 				d[size] = getNumChar(c);
@@ -1168,11 +1236,187 @@ _PROD18(I + 1)
 				dd *=10;
 				size++;
 			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				muchar c2 = (muchar)dd;
+				if(c2 >= 5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
+			
+			
 			d[size] = 0;
 		}
 		
 	}
 	
+	
+	void ToCstr(mchar * d, mint & size, mdouble dd)
+	{
+		const int ss = sizeof(DOUBLEPOWCONST) / sizeof(mdouble);
+		
+		size = 0;
+		mbool isneg = false;
+		if(dd < 0) 
+		{
+			isneg = true;
+			dd *=-1;
+			d[size] = '-';
+			size++;
+		}
+		
+		
+		int at1 = 0;
+		int at2 = ss;
+		int mid = (at2 - at1)/2;
+		while((at2 - at1) > 1)
+		{
+			
+			if(dd > DOUBLEPOWCONST[mid])
+			{
+				at2 = mid;
+			}
+			else
+			{
+				at1 = mid;
+			}
+			mid = ((at2 - at1)/2) + at1;
+		}
+		int digi = 308 - at2;
+		
+		
+		
+		if(digi >= 19)
+		{
+			dd /= DOUBLEPOWCONST[at2];
+			muchar c = (muchar)dd;
+			d[size] = getNumChar(c);
+			dd -= c;
+			dd *=10;
+			size++;
+			d[size] = '.';
+			size++;
+			
+			for(mint i = 0; i < 4 && dd != 0; i++)
+			{
+				muchar c = (muchar)dd;
+				d[size] = getNumChar(c);
+				dd -= c;
+				dd *=10;
+				size++;
+			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				
+				muchar c2 = (muchar)dd;
+				dd -= c2;
+				dd *= 10;
+				if(c2 >=5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
+			
+			d[size] = 'e';
+			size++;
+			
+			mint size1 = 0;
+			ToCstr(d +  size, size1, digi);
+			size += size1;
+			d[size] = 0;
+		}
+		else if (digi <= -6)
+		{
+			dd /= DOUBLEPOWCONST[at2];
+			muchar c = (muchar)dd;
+			d[size] = getNumChar(c);
+			dd -= c;
+			dd *=10;
+			size++;
+			d[size] = '.';
+			size++;
+			
+			for(mint i = 0; i < 4 && dd != 0; i++)
+			{
+				muchar c = (muchar)dd;
+				d[size] = getNumChar(c);
+				dd -= c;
+				dd *=10;
+				size++;
+			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				
+				muchar c2 = (muchar)dd;
+				dd -= c2;
+				dd *= 10;
+				if(c2 >=5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
+			
+			d[size] = 'e';
+			size++;
+			
+			d[size] = '-';
+			size++;
+			
+			digi *= -1;
+			mint size1 = 0;
+			ToCstr(d +  size, size1, digi);
+			size += size1;
+			d[size] = 0;
+			
+			
+		}
+		else
+		{
+			
+			mulong n = (mulong) dd;
+			mint size1; 
+			ToCstr(d + size, size1, n);
+			size += size1;
+			dd -= n;
+			dd *=10;
+			
+			if(dd != 0) 
+			{
+				d[size] = '.';
+				size++;
+			}
+			
+			for(mint i = 0; i < 4 && dd != 0; i++)//while(dd != 0)
+			{
+				muchar c = (muchar)dd;
+				d[size] = getNumChar(c);
+				dd -= c;
+				dd *=10;
+				size++;
+			}
+			if(dd != 0)
+			{
+				muchar c1 = (muchar)dd;
+				dd -= c1;
+				dd *= 10;
+				muchar c2 = (muchar)dd;
+				if(c2 >= 5) c1++;
+				d[size] = getNumChar(c1);
+				size++;
+			}
+			
+			
+			d[size] = 0;
+		}
+		
+	}
 	
 	
 
@@ -1288,9 +1532,14 @@ class string
 int main()
 {
 	
+	mchar buff[1000];
 	
+	mdouble f1 = -1.23456789e19;
+	mint size;
+	ToCstr(buff, size, f1);
+	cout << buff << "\r\n";
 	
-	
+	/*
 	
 	mint size;
 	mchar buff[1000];
