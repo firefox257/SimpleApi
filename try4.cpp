@@ -9,7 +9,8 @@
 #include <typeinfo>
 #include <algorithm>
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
+//#include <jemalloc/jemalloc.h>
 
 #include <fstream>
 
@@ -2255,6 +2256,28 @@ int main()
 	mulong t1, t2;
 	cout << "start \r\n";
 	
+	unordered_map<int, int> map1;
+	
+	t1 = time();
+	for(int i = 0; i < 1000000; i++)
+	{
+		
+		map1[i] = i % 256;
+	}
+	t2= time();
+	cout << "time is: " << (t2 - t1) << "\r\n";
+	
+	/*
+	t1 = time();
+	for(mint i = 0; i < 1000000; i++)
+	{
+		String::Builder sb;
+		sb << "try" << i;
+		String str1(sb);
+	}
+	t2 = time();
+	cout << "time: " << (t2 - t1) << "\r\n";
+	/*
 	String str1;
 	mchar buff[1000];
 	buff[0] = 't';
@@ -2302,10 +2325,10 @@ int main()
 		
 	}
 	//*/
-	t2 = time();
+	//t2 = time();
 	//cout << sb.Cstr() << "\r\n";
 	
-	cout << "time: " << (t2 - t1) << "\r\n";
+	//cout << "time: " << (t2 - t1) << "\r\n";
 		
 	
 	/*
