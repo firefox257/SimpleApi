@@ -32,7 +32,7 @@
 #include "SmtPtr.hpp"
 #include "Mapper.cpp"
 #include "Factory.cpp"*/
-#include <heapapi.h>
+//#include <heapapi.h>
 
 
 using namespace std;
@@ -41,30 +41,6 @@ using namespace std;
 
 
 
-HANDLE HEAPHANDLE;
-mbool SETUPHEAPHANDLE()
-{
-	HEAPHANDLE = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 100000000, 200000000);
-	return true;
-}
-mbool ISHEAPHANDLESET = SETUPHEAPHANDLE();
-
-inline void * mmalloc(mlong size)
-{
-	return malloc(size);
-	//return HeapAlloc(HEAPHANDLE, 0, size);
-}
-
-inline void * mrealloc(void * ptr, mlong size)
-{
-	return realloc(ptr, size);
-	//return HeapReAlloc(HEAPHANDLE, 0, ptr, size);
-}
-inline void mfree(void * ptr)
-{
-	return free(ptr);
-	//HeapFree(HEAPHANDLE, 0, ptr);
-}
 
 
 mulong  time()
@@ -1460,11 +1436,11 @@ class String
 	{
 		if(data == 0)
 		{
-			data = (mchar*)mmalloc(size);
+			data = (mchar*)malloc(size);
 		}
 		else
 		{
-			data = (mchar*)mrealloc(data, size);
+			data = (mchar*)realloc(data, size);
 		}
 	}
 	
@@ -1478,11 +1454,11 @@ class String
 		{
 			if(data == 0)
 			{
-				data = (mchar*)mmalloc(size);
+				data = (mchar*)malloc(size);
 			}
 			else
 			{
-				data = (mchar*)mrealloc(data, size);
+				data = (mchar*)realloc(data, size);
 			}
 		}
 		
