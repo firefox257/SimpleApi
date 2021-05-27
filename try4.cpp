@@ -9,11 +9,9 @@
 #include <typeinfo>
 #include <algorithm>
 
-
-//#include <stdio.h>
+#include <stdio.h>
 //#include <stdlib.h>
-//#include <mimalloc.h>
-//#include <mimalloc-override.h>
+//#include <jemalloc/jemalloc.h>
 
 #include <fstream>
 
@@ -2437,10 +2435,47 @@ class QuickMemory
 		mint index;
 	};
 	
+
 	mint * freeNode = 0;
 	node * a = 0;
 	mint maxSize = 500;
 	mint atIndex = 0;
+
+	mulong t1, t2;
+	cout << "start \r\n";
+	
+	unordered_map<int, int> map1;
+	
+	t1 = time();
+	for(int i = 0; i < 1000000; i++)
+	{
+		
+		map1[i] = i % 256;
+	}
+	t2= time();
+	cout << "time is: " << (t2 - t1) << "\r\n";
+	
+	/*
+	t1 = time();
+	for(mint i = 0; i < 1000000; i++)
+	{
+		String::Builder sb;
+		sb << "try" << i;
+		String str1(sb);
+	}
+	t2 = time();
+	cout << "time: " << (t2 - t1) << "\r\n";
+	/*
+	String str1;
+	mchar buff[1000];
+	buff[0] = 't';
+	buff[1] = 'r';
+	buff[2] = 'y';
+	
+	mint ss = 0;
+	mint s1;
+	
+>>>>>>> 8ae9c15d587a60a988560c4277c11231b3002ee1
 	
 	public:
 	QuickMemory()
@@ -2500,7 +2535,14 @@ class QuickMemory
 		freeNode[atIndex] = n->index;
 		
 	}
+
+	//*/
+	//t2 = time();
+	//cout << sb.Cstr() << "\r\n";
 	
+	//cout << "time: " << (t2 - t1) << "\r\n";
+		
+
 	
 };
 
