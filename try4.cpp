@@ -8,8 +8,12 @@
 #include <tuple>
 #include <typeinfo>
 #include <algorithm>
-#include <stdio.h>
-#include <stdlib.h>
+
+
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <mimalloc.h>
+//#include <mimalloc-override.h>
 
 #include <fstream>
 
@@ -30,11 +34,39 @@
 #include "SmtPtr.hpp"
 #include "Mapper.cpp"
 #include "Factory.cpp"*/
-
+#include <heapapi.h>
 
 
 using namespace std;
 #define el << "\r\n"
+
+
+
+
+HANDLE HEAPHANDLE;
+mbool SETUPHEAPHANDLE()
+{
+	HEAPHANDLE = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 100000000, 200000000);
+	return true;
+}
+mbool ISHEAPHANDLESET = SETUPHEAPHANDLE();
+
+inline void * mmalloc(mlong size)
+{
+	return malloc(size);
+	//return HeapAlloc(HEAPHANDLE, 0, size);
+}
+
+inline void * mrealloc(void * ptr, mlong size)
+{
+	return realloc(ptr, size);
+	//return HeapReAlloc(HEAPHANDLE, 0, ptr, size);
+}
+inline void mfree(void * ptr)
+{
+	return free(ptr);
+	//HeapFree(HEAPHANDLE, 0, ptr);
+}
 
 
 mulong  time()
@@ -1418,23 +1450,23 @@ class String
 	
 	struct node
 	{
-		mchar * data = 0;
 		mint size = 0;
 		mbool isConst = false;
 	};
 	
 	node * ref;
 	mint * count;
+	mchar * data = 0;
 	
 	void resizeData(mint size)
 	{
-		if(ref->data == 0)
+		if(data == 0)
 		{
-			ref->data = (mchar*)malloc(size);
+			data = (mchar*)mmalloc(size);
 		}
 		else
 		{
-			ref->data = (mchar*)realloc(ref->data, size);
+			data = (mchar*)mrealloc(data, size);
 		}
 	}
 	
@@ -1448,11 +1480,11 @@ class String
 		{
 			if(data == 0)
 			{
-				data = (mchar*)malloc(size);
+				data = (mchar*)mmalloc(size);
 			}
 			else
 			{
-				data = (mchar*)realloc(data, size);
+				data = (mchar*)mrealloc(data, size);
 			}
 		}
 		
@@ -1629,19 +1661,20 @@ class String
 		count  = new mint;
 		(*count) = 1;
 		
-		ref->data = (mchar*)d;
+		data = (mchar*)d;
 		ref->isConst = true;
 		mint s = 0;
 		while(d[s] != 0) s++;
 		ref->size = s;
 	}
+	
 	String (mchar * d)
 	{
 		ref = new String::node;
 		count  = new mint;
 		(*count) = 1;
 		
-		ref->data = (mchar*)d;
+		data = (mchar*)d;
 		ref->isConst = true;
 		mint s = 0;
 		while(d[s] != 0) s++;
@@ -1654,7 +1687,7 @@ class String
 		count  = new mint;
 		(*count) = 1;
 		resizeData(2);
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const muchar & d)
@@ -1664,7 +1697,7 @@ class String
 		(*count) = 1;
 		resizeData(4);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 	}
 	
@@ -1674,8 +1707,8 @@ class String
 		count  = new mint;
 		(*count) = 1;
 		resizeData(2);
-		ref->data[1] = 0;
-		ref->data[0] = d;
+		data[1] = 0;
+		data[0] = d;
 		ref->size = 1;
 	}
 	
@@ -1688,7 +1721,7 @@ class String
 		(*count) = 1;
 		resizeData(6);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const mshort & d)
@@ -1698,7 +1731,7 @@ class String
 		(*count) = 1;
 		resizeData(7);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	
@@ -1710,7 +1743,7 @@ class String
 		(*count) = 1;
 		resizeData(11);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	String(const mint & d)
 	{
@@ -1720,7 +1753,7 @@ class String
 		resizeData(12);
 		
 	
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const mulong & d)
@@ -1731,7 +1764,7 @@ class String
 		(*count) = 1;
 		resizeData(21);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const mlong & d)
@@ -1742,7 +1775,7 @@ class String
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const mfloat & d)
@@ -1753,7 +1786,7 @@ class String
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const mdouble & d)
@@ -1764,24 +1797,33 @@ class String
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 	}
 	
 	String(const String & d)
 	{
 		ref = d.ref;
+		data = d.data;
 		count = d.count;
 		(*count)++;
 	}
 	
 	String(String::Builder & d)
 	{
+		mint s = d.Size();
 		ref = new String::node;
-		ref->data = d.data;
-		ref->size = d.Size();
-		count = d.count;
-		(*count)++;
-		resizeData(d.Size()+1);
+		//data = d.data;
+		ref->size = s;
+		//count = d.count;
+		count = new mint;
+		(*count) = 1;
+		resizeData(s+1);
+		
+		for(int i = 0; i < s; i++)
+		{
+			data[i] = d.data[i];
+		}
+		data[s] = 0;
 	}
 	
 	~String()
@@ -1792,10 +1834,10 @@ class String
 		{
 			if(!ref->isConst)
 			{
-				if(ref->data != 0)
+				if(data != 0)
 				{
-					delete(ref->data);
-					ref->data = 0;
+					delete(data);
+					data = 0;
 				}
 			}
 			delete(ref);
@@ -1809,7 +1851,7 @@ class String
 	
 	mchar * Cstr()
 	{
-		return ref->data;
+		return data;
 	}
 	
 	inline mint Size()
@@ -1819,7 +1861,7 @@ class String
 	
 	inline mchar operator [](mint index)
 	{
-		return ref->data[index];
+		return data[index];
 	}
 	
 	String & operator =(const mchar * d)
@@ -1829,9 +1871,9 @@ class String
 		{
 			if(!ref->isConst)
 			{
-				if(ref->data != 0)
+				if(data != 0)
 				{
-					delete(ref->data);
+					delete(data);
 					//ref->data = 0;
 					//ref->size = 0;
 				}
@@ -1846,7 +1888,7 @@ class String
 		count  = new mint;
 		(*count) = 1;
 		
-		ref->data = (mchar*)d;
+		data = (mchar*)d;
 		ref->isConst = true;
 		
 		return (*this);
@@ -1859,26 +1901,25 @@ class String
 		{
 			if(!ref->isConst)
 			{
-				if(ref->data != 0)
+				if(data != 0)
 				{
-					delete(ref->data);
+					delete(data);
 					//ref->data = 0;
 					//ref->size = 0;
 				}
 			}
 			(*count) = 1;
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		}
+		else
+		{
+			ref = new String::node;
+			count  = new mint;
+			(*count) = 1;
 		}
 		
-		ref = new String::node;
-		count  = new mint;
-		(*count) = 1;
-		
-		
-		
-		
-		ref->data = (mchar*)d;
+		data = (mchar*)d;
 		ref->isConst = true;
 		
 		return (*this);
@@ -1887,27 +1928,43 @@ class String
 	String & operator =(const mbool & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		
+		
+		//if((*count) <= 0)
+		//{
+			//(*count) = 1;
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			
+			ref = new String::node;
+			count  = new mint;
+			//(*count) = 1;
+		}
 		(*count) = 1;
 		resizeData(2);
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -1916,28 +1973,40 @@ class String
 	String & operator =(const muchar & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//(*count) = 1;
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		//}
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
 		}
-		
-		ref = new String::node;
-		count  = new mint;
+		else //if((*count) > 0)//else
+		{
+			ref = new String::node;
+			count  = new mint;
+			//(*count) = 1;
+		}
 		(*count) = 1;
 		resizeData(4);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -1945,28 +2014,40 @@ class String
 	String & operator =(const mchar & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//(*count) = 1;
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		//}
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
 		}
-		
-		ref = new String::node;
-		count  = new mint;
+		else //if((*count) > 1)//else
+		{
+			ref = new String::node;
+			count  = new mint;
+			//(*count) = 1;
+		}
 		(*count) = 1;
 		resizeData(2);
-		ref->data[1] = 0;
-		ref->data[0] = d;
+		data[1] = 0;
+		data[0] = d;
 		ref->size = 1;
 		
 		return (*this);
@@ -1975,28 +2056,40 @@ class String
 	String & operator =(const mushort & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		//}
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+		
+			ref = new String::node;
+			count  = new mint;
 		}
 		
-		ref = new String::node;
-		count  = new mint;
 		(*count) = 1;
 		resizeData(6);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2004,28 +2097,38 @@ class String
 	String & operator =(const mshort & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		//}
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
 		}
-		
-		ref = new String::node;
-		count  = new mint;
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(7);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2033,29 +2136,40 @@ class String
 	String & operator =(const muint & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
 		//4,294,967,295
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(11);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2063,28 +2177,40 @@ class String
 	String & operator =(const mint & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
+			//delete(ref);
+			//delete(count);
+		//}
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+		
+			ref = new String::node;
+			count  = new mint;
 		}
 		
-		ref = new String::node;
-		count  = new mint;
 		(*count) = 1;
 		resizeData(12);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2092,29 +2218,40 @@ class String
 	String & operator =(const mulong & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
 		//18,446,744,073,709,551,616
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(21);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2122,29 +2259,40 @@ class String
 	String & operator =(const mlong & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
 		//18,446,744,073,709,551,616
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2152,29 +2300,40 @@ class String
 	String & operator =(const mfloat & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
 		//18,446,744,073,709,551,616
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
@@ -2182,43 +2341,55 @@ class String
 	String & operator =(const mdouble & d)
 	{
 		(*count)--;
-		if((*count) <= 0)
-		{
-			if(!ref->isConst)
-			{
-				if(ref->data != 0)
-				{
-					delete(ref->data);
+		//if((*count) <= 0)
+		//{
+			//if(!ref->isConst)
+			//{
+				//if(ref->data != 0)
+				//{
+					//delete(ref->data);
 					//ref->data = 0;
 					//ref->size = 0;
-				}
-			}
+				//}
+			//}
 			
-			delete(ref);
-			delete(count);
-		}
+			//delete(ref);
+			//delete(count);
+		//}
 		
 		//18,446,744,073,709,551,616
-		ref = new String::node;
-		count  = new mint;
+		if((*count) <= 0)
+		{
+			if(ref->isConst)
+			{
+				ref->isConst = false;
+				data = 0;
+			}
+		}
+		else //if((*count) > 0)
+		{
+			ref = new String::node;
+			count  = new mint;
+		}
 		(*count) = 1;
 		resizeData(22);
 		
-		ToCstr(ref->data, ref->size, d);
+		ToCstr(data, ref->size, d);
 		
 		return (*this);
 	}
 	
 	String & operator = (const String & d)
 	{
+		//todo
 		(*count)--;
 		if((*count) <= 0)
 		{
 			if(!ref->isConst)
 			{
-				if(ref->data != 0)
+				if(data != 0)
 				{
-					delete(ref->data);
+					delete(data);
 					//ref->data = 0;
 					//ref->size = 0;
 				}
@@ -2228,8 +2399,10 @@ class String
 			delete(count);
 		}
 		
+		
 		count = d.count;
 		ref = d.ref;
+		data = d.data;
 		(*count)++;
 		
 		return (*this);
@@ -2243,151 +2416,208 @@ class String
 class try1
 {
 	public:
-	int i1;
+	long long i1;
 	try1()
 	{
 		i1 = 1;
 	}
 };
+
+
+
+
+
+
+template<class A>
+class QuickMemory
+{
+	struct node
+	{
+		A a;
+		mint index;
+	};
+	
+	mint * freeNode = 0;
+	node * a = 0;
+	mint maxSize = 500;
+	mint atIndex = 0;
+	
+	public:
+	QuickMemory()
+	{
+		freeNode = (mint*)mmalloc(sizeof(mint) * maxSize);
+		a = (node*)mmalloc(sizeof(node) * maxSize);
+		
+		for(mint i = 0; i < maxSize; i++)
+		{
+			a[i].index = i;
+			freeNode[i] = i;
+			
+		}
+		atIndex = maxSize - 1;
+	}
+	~QuickMemory()
+	{
+		free(freeNode);
+		free(a);
+		freeNode = 0;
+		a = 0;
+	}
+	
+	A * Create()
+	{
+		if(atIndex == 0)
+		{
+			freeNode = (mint*)realloc(freeNode, sizeof(mint) * (maxSize + 500));
+			a = (node*)realloc(a, sizeof(node)  * (maxSize + 500));
+			for(mint i = 0; i < 500; i++)
+			{
+				freeNode[i] = maxSize + i;
+				a[i + maxSize].index = maxSize + i;
+			}
+			atIndex = 499;
+		}
+		
+		
+		mint i = freeNode[atIndex];
+		//cout << "init " << i << "\r\n";
+		A * at = &a[i].a;
+		
+		new(at)A;
+		atIndex--;
+		
+		return at;
+	}
+	
+	void Remove(A * a)
+	{
+		a->~A();
+		
+		QuickMemory::node * n = (QuickMemory::node*)a;
+		
+		//cout << "remove " << n->index << "\r\n";
+		atIndex++;
+		freeNode[atIndex] = n->index;
+		
+	}
+	
+	
+};
+
+class try2
+{
+	public:
+	long long i1;
+	try2()
+	{
+		i1 = 123;
+		cout << "try2 init \r\n";
+	}
+	~try2()
+	{
+		cout << "try2 delete \r\n";
+	}
+};
+
 int main()
 {
 	
+	
+	
+	QuickMemory<String::Builder> mem;
+	
 	mulong t1, t2;
-	cout << "start \r\n";
 	
-	String str1;
-	mchar buff[1000];
-	buff[0] = 't';
-	buff[1] = 'r';
-	buff[2] = 'y';
+	//String::Builder sb;
 	
-	mint ss = 0;
-	mint s1;
-	
-	
-	String::Builder sb;
-	mchar * bb = "try";
 	t1 = time();
-	for (mint i = 0; i < 1000000; i++)
+	for(mint i = 0;i < 1000000; i++)
 	{
-		try1 * tt = new try1;
+		//sb.reset();
+		//sb << "try" << i;
+		
+		
+		//String str1(sb);
+		
+		
+		//mchar * m = (mchar*)malloc(1000);
+		//m[0] = 'h';
+		
+		String::Builder sb;
+		sb << "try" << i;
+		//String str1(sb);
 	}
-	
-	/*
-	for (int i = 0; i < 1000000; i++)
-	{
-		
-		ss = 0;
-		
-		while(bb[ss] != 0)
-		{
-			buff[ss] = bb[ss];
-			ss++;
-		}
-		
-		ToCstr(buff + ss, s1, i);
-		ss+=s1;
-		////ToCstr(buff + ss, s1, i);
-		//ss+=s1;
-		
-	}
-	//*/
-	
-	/*
-	for (int i = 0; i < 1000000; i++)
-	{
-		sb.reset();
-		
-		sb << "try" <<i;
-		
-	}
-	//*/
 	t2 = time();
-	//cout << sb.Cstr() << "\r\n";
+	cout << "time: " << (t2 - t1) << "\r\n";
+	
+	
+	
+	/*
+	QuickMemory<try1> mem;
+	
+	//try2 * tt2 = mem.Create();
+	//mem.Remove(tt2);
+	
+	mulong t1, t2;
+	
+	t1 = time();
+	for(mint i = 0;i < 1000000; i++)
+	{
+		try1 * t1 = new try1();
+	}
+	t2 = time();
 	
 	cout << "time: " << (t2 - t1) << "\r\n";
-		
 	
-	/*
-	mdouble f1 = 123456.123;
-	
-	String str1;
-	str1 = f1;
-	cout << str1.Cstr() << "\r\n";
-	cout << f1 << "\r\n";
-	/*
-	mchar buff[1000];
-	
-	mdouble f1 = -1.23456789e19;
-	mint size;
-	ToCstr(buff, size, f1);
-	cout << buff << "\r\n";
-	
-	/*
-	
-	mint size;
-	mchar buff[1000];
-	mulong t1, t2;
-	
-	
-	mfloat f1 = -1234.12345;
-	
-	ToCstr(buff, size, f1);
-	cout << buff << "\r\n";
-			
 	t1 = time();
-	for (mfloat i = 0; i < 1000000; i++)
+	for(mint i = 0;i < 1000000; i++)
 	{
-		ToCstr(buff, size,  i);
-		//stringConvert::Mint(buff, size, i);
+		try1 * t1 = mem.Create();
 	}
 	t2 = time();
-	cout << "time: "  << (t2 - t1) << "\r\n";
-	cout << buff << "\r\n";
-	/*
-	mfloat f1 = 123456.123;
-	mchar buff[100];
-	int size = 0;
-	ToCstr(buff, size,  f1);
-	cout << buff;
+	
+	cout << "time: " << (t2 - t1) << "\r\n";
 	
 	/*
-	mchar buff[30];
-	
-	mint size; 
-	
-	
-	mfloat f1 = -123.123;
-	
-	
-	ToCstr(buff, size, f1);
-	cout << "buff: "<< buff << "\r\n";
-	
+	try2 * tt2 = (try2*)malloc(sizeof(try2));
 	
 	
 	mulong t1, t2;
 	t1 = time();
-	for(mfloat i = 0; i < 1000000; i++)
-	{
 	
-		ToCstr(buff, size, i);
+	for(mint i = 2; i< 1000000; i++)
+	{
+		tt2 = (try2*)realloc(tt2, sizeof(try2) * i);
 	}
 	t2 = time();
-	cout << "time: " << (t2  - t1) << "\r\n";
-	cout << "buff " << buff << "\r\n";
+	cout << "time: " << (t2 - t1) << "\r\n";
+	
+	
+	
 	
 	/*
-	t1 = time();
-	for(mint i = 0; i < 1000000000; i++)
-	{
+	try2 * tt2 = (try2*)malloc(sizeof(try2));
+	cout << "try2 " << tt2 << "\r\n";
+	//new (tt1) try1();
+	new (tt2) try2;
+	cout << "try2 " << tt2 << "\r\n";
+	cout << tt2->i1 << "\r\n";
 	
-		//int snprintf ( char * s, size_t n, const char * format, ... );
-		size =  snprintf ( buff, 30, "%d");
+	tt2->~try2();
+	cout << "try2 " << tt2 << "\r\n";
+	free(tt2);
+	
+	/*
+	mulong t1, t2;
+	
+	t1 = time();
+	for(mint i = 0;i < 1000000; i++)
+	{
+		try1 * t1 = new try1();
 	}
 	t2 = time();
-	cout << "time: " << (t2  - t1) << "\r\n";
-	//*/
 	
+	cout << "time: " << (t2 - t1) << "\r\n";*/
 	return 0;
 }
 
