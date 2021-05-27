@@ -23,8 +23,8 @@ namespace try1
 			for(int i = 0; i < 1000000; i++)
 			{
 				
-				//string str1 = "try" + i;
-				map1[i] = i % 256;
+				string str1 = "try" + i;
+				//map1[i] = i % 256;
 			}
 			t2 = time();
 			Console.WriteLine("time " + (t2- t1));

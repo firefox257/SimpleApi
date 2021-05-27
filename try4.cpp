@@ -75,9 +75,9 @@ mulong  time()
 
 
 //unsigned longs
-#define D10P19 1e19
+#define D10P19 10000000000000000000UL
 //longs
-#define D10P18 1e18
+#define D10P18 1000000000000000000UL
 #define D10P17 100000000000000000L
 #define D10P16 10000000000000000L
 #define D10P15 1000000000000000L
@@ -2426,147 +2426,13 @@ class try1
 
 
 
-template<class A>
-class QuickMemory
-{
-	struct node
-	{
-		A a;
-		mint index;
-	};
-	
 
-	mint * freeNode = 0;
-	node * a = 0;
-	mint maxSize = 500;
-	mint atIndex = 0;
-
-	mulong t1, t2;
-	cout << "start \r\n";
-	
-	unordered_map<int, int> map1;
-	
-	t1 = time();
-	for(int i = 0; i < 1000000; i++)
-	{
-		
-		map1[i] = i % 256;
-	}
-	t2= time();
-	cout << "time is: " << (t2 - t1) << "\r\n";
-	
-	/*
-	t1 = time();
-	for(mint i = 0; i < 1000000; i++)
-	{
-		String::Builder sb;
-		sb << "try" << i;
-		String str1(sb);
-	}
-	t2 = time();
-	cout << "time: " << (t2 - t1) << "\r\n";
-	/*
-	String str1;
-	mchar buff[1000];
-	buff[0] = 't';
-	buff[1] = 'r';
-	buff[2] = 'y';
-	
-	mint ss = 0;
-	mint s1;
-	
->>>>>>> 8ae9c15d587a60a988560c4277c11231b3002ee1
-	
-	public:
-	QuickMemory()
-	{
-		freeNode = (mint*)mmalloc(sizeof(mint) * maxSize);
-		a = (node*)mmalloc(sizeof(node) * maxSize);
-		
-		for(mint i = 0; i < maxSize; i++)
-		{
-			a[i].index = i;
-			freeNode[i] = i;
-			
-		}
-		atIndex = maxSize - 1;
-	}
-	~QuickMemory()
-	{
-		free(freeNode);
-		free(a);
-		freeNode = 0;
-		a = 0;
-	}
-	
-	A * Create()
-	{
-		if(atIndex == 0)
-		{
-			freeNode = (mint*)realloc(freeNode, sizeof(mint) * (maxSize + 500));
-			a = (node*)realloc(a, sizeof(node)  * (maxSize + 500));
-			for(mint i = 0; i < 500; i++)
-			{
-				freeNode[i] = maxSize + i;
-				a[i + maxSize].index = maxSize + i;
-			}
-			atIndex = 499;
-		}
-		
-		
-		mint i = freeNode[atIndex];
-		//cout << "init " << i << "\r\n";
-		A * at = &a[i].a;
-		
-		new(at)A;
-		atIndex--;
-		
-		return at;
-	}
-	
-	void Remove(A * a)
-	{
-		a->~A();
-		
-		QuickMemory::node * n = (QuickMemory::node*)a;
-		
-		//cout << "remove " << n->index << "\r\n";
-		atIndex++;
-		freeNode[atIndex] = n->index;
-		
-	}
-
-	//*/
-	//t2 = time();
-	//cout << sb.Cstr() << "\r\n";
-	
-	//cout << "time: " << (t2 - t1) << "\r\n";
-		
-
-	
-};
-
-class try2
-{
-	public:
-	long long i1;
-	try2()
-	{
-		i1 = 123;
-		cout << "try2 init \r\n";
-	}
-	~try2()
-	{
-		cout << "try2 delete \r\n";
-	}
-};
 
 int main()
 {
 	
 	
 	
-	QuickMemory<String::Builder> mem;
 	
 	mulong t1, t2;
 	
@@ -2587,7 +2453,7 @@ int main()
 		
 		String::Builder sb;
 		sb << "try" << i;
-		//String str1(sb);
+		String str1(sb);
 	}
 	t2 = time();
 	cout << "time: " << (t2 - t1) << "\r\n";
