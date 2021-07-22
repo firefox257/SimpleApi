@@ -205,13 +205,6 @@ function finishRemakeDom(dom, tempdom)
 			if(!attri) return undefined;
 			return getTieOrTieEvents(attri);
 		}
-		function getDomTieRead(dom)
-		{
-			var attri = $attr(dom, "tieread");
-			if(!attri) return undefined;
-			return getTieOrTieEvents(attri);
-		}
-		
 		
 		function getDomTieEvents(dom)
 		{
@@ -241,7 +234,7 @@ function finishRemakeDom(dom, tempdom)
 			return attri.trim();
 		}
 		
-		function createTieOrTieEventsTieReadTieEventsRead_BackerFieldsAndTracker(dom, o, tiea)
+		function createTieOrTieEvents_BackerFieldsAndTracker(dom, o, tiea)
 		{
 			if(tiea)
 			{
@@ -473,10 +466,8 @@ function finishRemakeDom(dom, tempdom)
 				var o = at.parentobj;
 				
 				var tiea = getDomTie(at);
-				var tiera = getDomTieRead(at);
 				var tiec = getDomTieClass(at);
 				//var tiee = getDomTieEvents(at);
-				//var tiere = getDomTieEventsRead(at);
 				
 				for(var i = 0; i < tiea.length; i++)
 				{
@@ -524,10 +515,8 @@ function finishRemakeDom(dom, tempdom)
 function parseSingleDom(dom, o)
 {
 		var tiea = getDomTie(dom);
-		var tiera = getDomTieRead(dom);
 		var tiec = getDomTieClass(dom);
 		var tiee = getDomTieEvents(dom);
-		var tiere = getDomTieEventsRead(dom);
 		var tied = getDomTieDom(dom);
 		//console.log("Here33333===============");
 		//console.log(tiea);
@@ -536,13 +525,8 @@ function parseSingleDom(dom, o)
 		//console.log(tiee);
 		//console.log(tiere);
 		
-		createTieOrTieEventsTieReadTieEventsRead_BackerFieldsAndTracker(dom, o, tiea);
-		
-		
-		
-		createTieOrTieEventsTieReadTieEventsRead_BackerFieldsAndTracker(dom, o, tiera);
-		createTieOrTieEventsTieReadTieEventsRead_BackerFieldsAndTracker(dom, o, tiee);
-		createTieOrTieEventsTieReadTieEventsRead_BackerFieldsAndTracker(dom, o, tiere);
+		createTieOrTieEvents_BackerFieldsAndTracker(dom, o, tiea);
+		createTieOrTieEvents_BackerFieldsAndTracker(dom, o, tiee);
 		createTieClass_BackerAndTracker(dom, o,tiec);
 		
 		if(tiea)
@@ -612,10 +596,8 @@ function setCompAttributes(pdom, o, listo)
 	}
 	
 	var tiea = getDomTie(pdom);
-	var tiera = getDomTieRead(pdom);
 	var tiec = getDomTieClass(pdom);
 	var tiee = getDomTieEvents(pdom);
-	var tiere = getDomTieEventsRead(pdom);
 	
 	var attributes = {};
 	
