@@ -148,45 +148,45 @@ export function $comp(name, o)
 
 var uniquename = 0;
 
-function remakeDom(dom, ato)
-{
-	var temp = document.createElement("div");
-	
-	if(ato.html)
-	{
-		temp.innerHTML = ato.html.trim().replaceAll("$uniquename", "____name" + uniquename);
-	}
-	else
-	{
-		temp.innerHTML = o.html.trim().replaceAll("$uniquename", "____name" + uniquename);
-	}
-	uniquename++;
-	var tempdom = temp.firstChild;//content;//.firstChild;
-	return tempdom;
-}
-
-function finishRemakeDom(dom, tempdom)
-{
-	var tieinner;
-	if($hasAttr(tempdom, "tieinner"))
-	{
-		tieinner = tempdom;
-	}
-	else
-	{
-		tieinner = $q("*[tieinner]", tempdom);
-	}
-	
-	if(tieinner)
-	{
-		while(dom.childNodes.length >0)
+		function remakeDom(dom, ato)
 		{
-			var v1 = dom.childNodes[0];
-			tieinner.appendChild(v1);
+			var temp = document.createElement("div");
+			
+			if(ato.html)
+			{
+				temp.innerHTML = ato.html.trim().replaceAll("$uniquename", "____name" + uniquename);
+			}
+			else
+			{
+				temp.innerHTML = o.html.trim().replaceAll("$uniquename", "____name" + uniquename);
+			}
+			uniquename++;
+			var tempdom = temp.firstChild;//content;//.firstChild;
+			return tempdom;
 		}
-	}
-	dom.replaceWith(tempdom);
-}
+
+		function finishRemakeDom(dom, tempdom)
+		{
+			var tieinner;
+			if($hasAttr(tempdom, "tieinner"))
+			{
+				tieinner = tempdom;
+			}
+			else
+			{
+				tieinner = $q("*[tieinner]", tempdom);
+			}
+			
+			if(tieinner)
+			{
+				while(dom.childNodes.length >0)
+				{
+					var v1 = dom.childNodes[0];
+					tieinner.appendChild(v1);
+				}
+			}
+			dom.replaceWith(tempdom);
+		}
 
 		function getTieOrTieEvents(tie)
 		{
@@ -213,13 +213,6 @@ function finishRemakeDom(dom, tempdom)
 			return getTieOrTieEvents(attri);
 		}
 		
-		function getDomTieEventsRead(dom)
-		{
-			var attri= $attr(dom, "tieeventsread"); 
-			if(!attri) return undefined;
-			return getTieOrTieEvents(attri);
-		}
-		
 		function getDomTieClass(dom)
 		{
 			var attri = $attr(dom, "tieclass");
@@ -230,6 +223,12 @@ function finishRemakeDom(dom, tempdom)
 		function getDomTieDom(dom)
 		{
 			var attri = $attr(dom, "tiedom");
+			if(!attri) return undefined;
+			return attri.trim();
+		}
+		function getDomTieRadio(dom)
+		{
+			var attri = $attr(dom, "tieradio");
 			if(!attri) return undefined;
 			return attri.trim();
 		}
@@ -274,8 +273,7 @@ function finishRemakeDom(dom, tempdom)
 			}
 		}
 		
-		
-		function createTieClass_BackerAndTracker(dom, o, tieclass)
+		function createTieClassTieRadio_BackerAndTracker(dom, o, tieclass)
 		{
 			
 			if(tieclass)
@@ -301,23 +299,21 @@ function finishRemakeDom(dom, tempdom)
 			$fastpath(o, "domtracker." + tieclass).push(dom);
 		}
 		
-		
-		///////////////////////
-		
-		
 		function setDomTieClass(dom, o, tiep, v)
 		{
-			/*
-			$qa(`*[tieclass="${tiep}"]`).forEach((dom1)=>
-			{
-				//$faspath(dom1, tiep[0], v);
-				$attr(dom1, "class", v);
-			});*/
-			
 			var domtracker = $fastpath(o.domtracker, tiep);
 			for(var i= 0; i < domtracker.length; i++)
 			{
-				$attr(domtracker[i], "class", v);
+				setBackerOtherMultiDom(domtracker[i], o, tiep, v);
+			}
+		}
+		
+		function setDomTieRadio(dom, o, tiep, v)
+		{
+			var domtracker = $fastpath(o.domtracker, tiep);
+			for(var i= 0; i < domtracker.length; i++)
+			{
+				setBackerOtherMultiDom(domtracker[i], o, tiep, v);
 			}
 		}
 		
@@ -333,11 +329,11 @@ function finishRemakeDom(dom, tempdom)
 				set: function(v)
 				{
 					$fastpath(o.backerfields, tiep, v);
-					var tracker = $fastpath(o.tracker, tiep);
+					/*var tracker = $fastpath(o.tracker, tiep);
 					for(var i = 0; i < tracker.length; i++)
 					{
-						tracker[i](v);
-					}
+						//tracker[i](v);
+					}*/
 					setDomTieClass(dom, o, tiep, v);
 				}
 			});
@@ -358,13 +354,50 @@ function finishRemakeDom(dom, tempdom)
 			_createGetSetTieClass(dom, o, tiep, ato, atend);
 		}
 		
+		function _createGetSetTieRadio(dom, o, tiep, ato, atend)
+		{
+			Object.defineProperty(ato, tiep, 
+			{
+				get: function()
+				{
+					return $fastpath(o.backerfields, tiep);
+				},
+				set: function(v)
+				{
+					
+					$fastpath(o.backerfields, tiep, v);
+					/*var tracker = $fastpath(o.tracker, tiep);
+					for(var i = 0; i < tracker.length; i++)
+					{
+						//tracker[i](v);
+					}*/
+					setDomTieRadio(dom, o, tiep, v);
+				}
+			});
+
+		}
+		
+		function createGetSetTieRadio(dom, o, tiep)
+		{
+			var at = o;
+			var att = tiep.split(".");
+			var atend = att.pop();
+			
+			var ato = att.reduce((oo,p)=>
+			{
+				if(!oo[p]) oo[p] = {};
+				return oo[p];
+			}, o);
+			_createGetSetTieRadio(dom, o, tiep, ato, atend);
+		}
 		
 		function setDomTieBi(dom, o, tiep, v)
 		{
 			var domtracker = $fastpath(o.domtracker, tiep[0]);
 			for(var i = 0; i < domtracker.length; i++)
 			{
-				$fastpath(domtracker[i], tiep[1], v);
+				//$fastpath(domtracker[i], tiep[1], v);
+				setBackerOtherMultiDom(domtracker[i], o, tiep[0], v);
 			}
 		}
 		
@@ -380,11 +413,11 @@ function finishRemakeDom(dom, tempdom)
 				set: function(v)
 				{
 					$fastpath(o.backerfields, tiep[0], v);
-					var tracker = $fastpath(o.tracker, tiep[0]);
+					/*var tracker = $fastpath(o.tracker, tiep[0]);
 					for(var i = 0; i < tracker.length; i++)
 					{
-						tracker[i](v);
-					}
+						//tracker[i](v);
+					}*/
 					setDomTieBi(dom, o, tiep, v);
 				}
 			});
@@ -405,6 +438,27 @@ function finishRemakeDom(dom, tempdom)
 			_createGetSetBi(dom, o, tiep, ato, atend);
 		}
 		
+		function setDomRadioFromBacker(dom, o, tiep)
+		{
+			var v = $fastpath(o.backerfields, tiep);
+			if(v)
+			{
+				var name = $attr(dom, "name");
+				var domtracker = $fastpath(o.domtracker, tiep);
+				for(var i= 0; i < domtracker.length; i++)
+				{
+					var atv = $attr(domtracker[i], "value");
+					if(atv == v)
+					{
+						domtracker[i].checked = true;
+						break;
+					}
+				}
+				
+				
+			}
+			
+		}
 		function setDomClassFromBacker(dom, o, tiep)
 		{
 			$attr(dom, "class", $fastpath(o.backerfields, tiep));
@@ -416,9 +470,50 @@ function finishRemakeDom(dom, tempdom)
 		}
 		
 		
+		function setBackerOtherMultiDom(dom, o, tiep1, v)
+		{
+			//var domtrack = $fastpath(o.domtracker, tiep);
+			
+			var tiea = getDomTie(dom);
+			var tiec = getDomTieClass(dom);
+			var tieradio = getDomTieRadio(dom);
+			if(tiec && tiec == tiep1)
+			{
+				$attr(dom, "class", v);
+			}
+			if(tieradio && tieradio == tiep1)
+			{
+				var atv = $attr(dom, "value");
+				if(atv == v)
+				{
+					dom.checked = true;
+				}
+			}
+			if(tiea)
+			{
+				for(var i = 0; i < tiea.length; i++)
+				{
+					var atp = tiea[i];
+					if(atp[0] == tiep1)
+					{
+						$fastpath(dom, atp[1], v);
+					}
+				}
+				//$fastpath(dom1, tiep[1], v);
+			}
+			
+		}
+		
 		function setBackerOtherDomFromValueDoTrackerClass(dom, o, tiep, v, tag)
 		{
 			$fastpath(o.backerfields, tiep, v);
+			
+			var track = $fastpath(o.tracker, tiep);
+			for(var i = 0; i < track.length; i++)
+			{
+				track[i](v);
+			}
+			/*
 			$qa(`*[${tag}*="${tiep[0]}:${tiep[1]}"`).forEach((dom1)=>
 			{
 				if(dom1 != dom)
@@ -426,14 +521,49 @@ function finishRemakeDom(dom, tempdom)
 					$attr(dom1, "class", v);
 				}
 				
-			});
+			});*/
+			
+			var domtrack = $fastpath(o.domtracker, tiep);
+			for(var i = 0; i < domtrack.length; i++)
+			{
+				var dom1 = domtrack[i];
+				if(dom1 != dom)
+				{
+					//$fastpath(dom1, tiep[1], v);
+					setBackerOtherMultiDom(dom1, o, tiep, v);
+				}
+			}
+			
+			
+		}
+		
+		function setBackerOtherDomFromValueDoTrackerRadio(dom, o, tiep, v, tag)
+		{
+			var checked = dom.checked;
+			if(!checked) return;
+			
+			$fastpath(o.backerfields, tiep, v);
+			
 			var track = $fastpath(o.tracker, tiep);
 			for(var i = 0; i < track.length; i++)
 			{
 				track[i](v);
 			}
 			
+			var domtrack = $fastpath(o.domtracker, tiep);
+			for(var i = 0; i < domtrack.length; i++)
+			{
+				var dom1 = domtrack[i];
+				if(dom1 != dom)
+				{
+					//$fastpath(dom1, tiep[1], v);
+					setBackerOtherMultiDom(dom1, o, tiep, v);
+				}
+			}
+			
+			
 		}
+		
 		function setBackerOtherDomFromValueDoTrackerBi(dom, o, tiep, v, tag)
 		{
 			$fastpath(o.backerfields, tiep[0], v);
@@ -445,12 +575,14 @@ function finishRemakeDom(dom, tempdom)
 			}
 			
 			var domtrack = $fastpath(o.domtracker, tiep[0]);
+	
 			for(var i = 0; i < domtrack.length; i++)
 			{
 				var dom1 = domtrack[i];
 				if(dom1 != dom)
 				{
-					$fastpath(dom1, tiep[1], v);
+					//$fastpath(dom1, tiep[1], v);
+					setBackerOtherMultiDom(dom1, o, tiep[0], v);
 				}
 			}
 			
@@ -461,21 +593,34 @@ function finishRemakeDom(dom, tempdom)
 			
 			dom[event] = function(e)
 			{
-				
 				var at = this;
 				var o = at.parentobj;
 				
 				var tiea = getDomTie(at);
+				var tieradio = getDomTieRadio(at);
 				var tiec = getDomTieClass(at);
 				//var tiee = getDomTieEvents(at);
 				
-				for(var i = 0; i < tiea.length; i++)
+				if(tiea)
 				{
-					var v1 = $fastpath(at,  tiea[i][1]);
-					var v2 = $fastpath(o, tiea[i][0]);
+					for(var i = 0; i < tiea.length; i++)
+					{
+						var v1 = $fastpath(at,  tiea[i][1]);
+						var v2 = $fastpath(o, tiea[i][0]);
+						if(v1 != v2)
+						{
+							setBackerOtherDomFromValueDoTrackerBi(dom, o, tiea[i], v1, "tie");
+						}
+					}
+				}
+				if(tieradio)
+				{
+					var v1 = $attr(at, "value");
+					var v2 = $fastpath(o, tieradio);
 					if(v1 != v2)
 					{
-						setBackerOtherDomFromValueDoTrackerBi(dom, o, tiea[i], v1, "tie");
+						$fastpath(o, tieradio, v1);
+						setBackerOtherDomFromValueDoTrackerRadio(dom, o, tieradio, v1, "tieradio");
 					}
 				}
 				{
@@ -495,7 +640,6 @@ function finishRemakeDom(dom, tempdom)
 				
 			};
 		}
-		
 		
 		function createTrackEvents(dom, o)
 		{
@@ -518,17 +662,12 @@ function parseSingleDom(dom, o)
 		var tiec = getDomTieClass(dom);
 		var tiee = getDomTieEvents(dom);
 		var tied = getDomTieDom(dom);
-		//console.log("Here33333===============");
-		//console.log(tiea);
-		//console.log(tiera);
-		//console.log(tiec);
-		//console.log(tiee);
-		//console.log(tiere);
+		var tieradio = getDomTieRadio(dom);
 		
 		createTieOrTieEvents_BackerFieldsAndTracker(dom, o, tiea);
 		createTieOrTieEvents_BackerFieldsAndTracker(dom, o, tiee);
-		createTieClass_BackerAndTracker(dom, o,tiec);
-		
+		createTieClassTieRadio_BackerAndTracker(dom, o,tiec);
+		createTieClassTieRadio_BackerAndTracker(dom, o,tieradio);
 		if(tiea)
 		{
 			for(var i = 0; i < tiea.length; i++)
@@ -546,6 +685,11 @@ function parseSingleDom(dom, o)
 		if(tiec)
 		{
 			createGetSetTieClass(dom, o,tiec);
+		}
+		
+		if(tieradio)
+		{
+			createGetSetTieRadio(dom, o, tieradio);
 		}
 		
 		if(tiea)
@@ -566,15 +710,14 @@ function parseSingleDom(dom, o)
 		{
 			setDomClassFromBacker(dom, o,tiec);
 		}
+		if(tieradio)
+		{
+			setDomRadioFromBacker(dom, o, tieradio);
+		}
 		
 		createTrackEvents(dom, o);
 		
 		o[tied] = dom;
-		
-		//console.log(dom);
-		//console.log("final");
-		//console.log(o);
-		//console.log("=====================");
 		
 		return o;
 }
@@ -728,11 +871,11 @@ function parseDom(pdom, listo, parento)
 	//
 	if(dom.nodeName != "COMP" && ($attr(dom, "tie")||
 	$attr(dom, "tieclass")||$attr(dom, "tieevents")
-	||$attr(dom, "trackevents") || $attr(dom, "tiedom")     ))
+	||$attr(dom, "trackevents") || $attr(dom, "tiedom") || $attr(dom, "tieradio")    ))
 	{
 		parseSingleDom(dom, o);
 	}
-	$qa("*[tie], *[tieclass], *[tieevents], *[trackevents], *[tiedom]", dom).forEach((dom1)=>
+	$qa("*[tie], *[tieclass], *[tieevents], *[trackevents], *[tiedom], *[tieradio]", dom).forEach((dom1)=>
 	{
 		if(dom.nodeName == "COMP") return;
 		parseSingleDom(dom1, o);

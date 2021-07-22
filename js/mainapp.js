@@ -63,7 +63,29 @@ const html = `
 	</div>
 	
 	<comp tietype="page" id="starttopmenu" group="topmenu"  show = "true">
-		<input type="text" tie="in1:value" trackevents="oninput"/>
+		<br/>
+		<br/>
+		
+		<div tie="multitext:innerHTML"></div>
+		<div tie="multitext:innerHTML"></div>
+		<div tie="multitext:innerHTML"></div>
+		<br/>
+		<div>multiinput</div>
+		<div tie = "multiinput:innerHTML"></div>
+		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
+		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
+		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
+		
+		<br/>
+		<br/>
+		<br/>
+		<input type="text" tie="in1:value" trackevents="oninput"/><br/>
+		<br/>
+		<div> atradio</div>
+		<div tie="atradio:innerHTML"></div>
+		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "abc"/>
+		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "bcd"/>
+		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "cde"/>
 	</comp>
 	<comp tietype= "page" id="viewstopmenu" group="topmenu" show = "false">
 		view page
@@ -80,7 +102,10 @@ function mainapp()
 {
 	
 	var at = {
+		multitext: "asdf",
+		multiinput: "start",
 		itemsDom: undefined,
+		atradio: "bcd",
 		startClick(e)
 		{
 			console.log("start clicked");
@@ -105,6 +130,12 @@ function mainapp()
 			{
 				console.log(at.in1);
 			});
+			at.tracker.atradio.push(function(v)
+			{
+				console.log("radio");
+				console.log(v);
+			});
+			at.multitext = "hi there";
 		},
 		afterinit()
 		{
