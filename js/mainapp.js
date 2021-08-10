@@ -1,13 +1,13 @@
 
 import {$} from "/tie.js";
 import {} from "./ui/ui.js";
-
+import {colors} from "/ui/colors.js";
 const css = `
 body
 {
-	font-size: 3.5mm;
-	background-color: #333;
-	color: #bbb;
+	font-size: 4mm;
+	background-color: ${colors.background};
+	color: ${colors.default};
 }
 .full
 {
@@ -32,8 +32,16 @@ block
 
 const html = `
 <div class ="full">
+<comp tietype="button" color="ok">hi there</comp>
 <br/>
-
+<comp tietype="try1button" tieevents="onclick2:onclick">aasdf</comp>
+<br/>
+<comp tietype="checkbox" color="ok"></comp>
+<comp tietype="checkbox" color="danger"></comp>
+<comp tietype="checkbox" color="warning"></comp>
+<comp tietype="checkbox" color="info"></comp>
+<comp tietype="checkbox" color="notice"></comp>
+<comp tietype="checkbox" color="error"></comp>
 
 <br/>
 <br/>
@@ -76,16 +84,16 @@ const html = `
 
 <comp tietype="checkbox" color="#00ff88" checked="0" tieevents="onchange1:onchange"></comp>
 
-<comp tietype="modal" show="0" color="#999" tieobj="atmodal">
+<comp tietype="modal" show="0" tieobj="atmodal">
 <table>
 	<tr>
 		<td colspan="2">
-		Hi there <comp tietype="checkbox" color="#ff3300" checked="0" tieevents="onchange:onchange"></comp>
+		Hi there <comp tietype="checkbox" color="ok" checked="0" tieevents="onchange:onchange"></comp>
 		</td>
 	</tr>
 	<tr>
 		<td>
-			<comp tietype="button" color = "#00ffaa" tieevents="onclick1:onclick">Ok</comp>
+			<comp tietype="button" color = "notice" tieevents="onclick1:onclick">Ok</comp>
 		</td>
 		<td>
 			
@@ -114,6 +122,10 @@ var at =
 	{
 			console.log("ehre33");
 		at.atmodal.show = 0;
+	},
+	onclick2(e)
+	{
+		console.log("here3333");
 	}
 };
 

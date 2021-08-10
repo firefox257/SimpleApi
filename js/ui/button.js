@@ -1,5 +1,5 @@
 import {$} from "/tie.js";
-
+import {colors} from "/ui/colors.js"
 const css = `
 	.Button
 	{
@@ -10,7 +10,7 @@ const css = `
 		border-radius: 2mm;
 		box-shadow: 0 0 3mm;
 		user-select: none;
-		background-color: #444;
+		background-color: ${colors.compbackground};
 		display: inline-block;
 		text-shadow: 1px 1px 1px #000;
 	}
@@ -27,8 +27,7 @@ const css = `
 `;
 
 const html = `
-<span class="Button" tie = "bordercolor:style.borderColor, color:style.color"   tieattributes="style:style" tieevents="onclick:onclick" tieinner>
-	
+<span class="Button" tie = "color:style.borderColor, color:style.color"   tieattributes="style:style" tieevents="onclick:onclick" tieinner>
 </span>
 `;
 
@@ -45,8 +44,7 @@ function button()
 			},
 			set color(v)
 			{
-				at.color = v;
-				at.bordercolor = v;
+				at.color = colors[v];
 				
 			},
 			get class()
@@ -70,21 +68,11 @@ function button()
 			},
 			onclick: undefined
 		},
-		bordercolor: "#fff",
-		color: "#fff",
+		color: colors.default,
 		style: "",
 		onclick(e)
 		{
-			console.log("eee");
-			console.log(at.attributes.onclick);
 			if(at.attributes.onclick) at.attributes.onclick(e);
-		},
-		beforeinit()
-		{
-			
-			console.log("button");
-			console.log(at);
-			
 		}
 		
 	};

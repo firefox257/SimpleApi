@@ -1,20 +1,22 @@
 
 import {$} from "/tie.js";
+import {colors} from "/ui/colors.js";
 
 const css = `
 .checkbox-unchecked
 {
 	padding: 0;
-	margin: 0.3mm;
+	margin: 0;
 	display:inline-block;
-	border: 0.4mm solid #888;
+	border: 0.4mm solid ${colors.default} !important;
 	border-radius:1mm;
 	position:relative;
 	top: 0;
 	left: 0;
 	width:3mm;
 	height: 3mm;
-	background-color: #444 !important;
+	background-color: ${colors.defualt};
+	box-shadow: 0 0 3mm rgba(0, 0, 0, 0);
 }
 .checkbox-unchecked  svg
 {
@@ -27,13 +29,13 @@ const css = `
 	margin: 0;
 	display:inline-block;
 	border-radius:1mm;
-	border: 0.7mm solid;
+	border: 0.4mm solid;
 	position:relative;
 	top: 0;
 	left: 0;
 	width:3mm;
 	height: 3mm;
-	background-color: #00ff88;
+	
 	box-shadow: 0 0 3mm;
 }
 
@@ -41,9 +43,9 @@ const css = `
 
 const html = `
 
-<span tieclass = "class" tieevents="onclick:onclick" tie="color:style.backgroundColor, color1:style.color">
+<span tieclass = "class" tieevents="onclick:onclick" tie="bgcolor:style.backgroundColor,color:style.color" style="background-color:#0f0">
 	<svg
-	style = "position:absolute; top: 0; left; 0;"
+	style = "position:absolute; top: 0; left; 0; padding: 0; margin: 0;"
 	   xmlns:dc="http://purl.org/dc/elements/1.1/"
 	   xmlns:cc="http://creativecommons.org/ns#"
 	   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -94,10 +96,12 @@ function checkboxfunc()
 				if(v==0)
 				{
 					at.class = "checkbox-unchecked";
+					at.bgcolor = colors.compbackground;
 				}
 				else
 				{
 					at.class = "checkbox-checked";
+					at.bgcolor = at.color;
 				}
 			},
 			get color()
@@ -106,8 +110,8 @@ function checkboxfunc()
 			},
 			set color(v)
 			{
-				at.color = v;
-				at.color1 = v;
+				at.color = colors[v];
+				
 			},
 			onchange: undefined
 		},//end attributes
@@ -118,8 +122,8 @@ function checkboxfunc()
 			if(at.attributes.onchange)at.attributes.onchange(at.attributes.checked);
 		},
 		class: "checkbox-unchecked",
-		color:"#00bbff",
-		color1: "#00bbff"
+		color:colors.defualt,
+		bgcolor: colors.compbackground,
 	};
 	return at;
 }

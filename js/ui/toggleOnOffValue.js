@@ -62,8 +62,7 @@ function toggleOnOffValue()
 		},
 		init()
 		{
-			console.log("toggleOnOffValue init");
-			console.log(at);
+			
 		}
 		
 	};

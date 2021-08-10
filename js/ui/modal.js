@@ -1,4 +1,5 @@
 import {$} from "/tie.js";
+import {colors} from "/ui/colors.js";
 const css = `
 
 .modalfull
@@ -27,7 +28,7 @@ const css = `
 	border-radius: 1mm;
 	
 	border: 0.3mm solid;
-	background-color: #282828;
+	background-color: ${colors.modalbackground};
 	box-shadow: 0 0 5mm;
 
 }
@@ -72,11 +73,11 @@ function modalfunc()
 			},
 			set color(v)
 			{
-				at.color= v;
+				at.color= colors[v];
 			}
 		},
 		display: "block", 
-		color: "#282828"
+		color: colors.info
 	};
 	return at;
 }
