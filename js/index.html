@@ -4,17 +4,17 @@
 	<meta name="viewport" content="width=device-width, initial-scal=1"/>
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<body>
-	<doc tietype = "mainapp"></doc>
+<body> <!--</body>oncontextmenu="return false;">-->
+	<doc tietype="mainapp"></doc>
 	<script type="module">
-		import {$global} from "./tools.js";
+		import {$global} from "/tie.js";
 		$global.topMenuHeight = 7;//in mm;
 		$global.sideMenuWidth = 15;//in mm;
 	</script>
 	<script type="module">
-		import "./mainapp.js";
-		import {$doc, $global, $} from "./tools.js";
-		$doc();
+		import {$} from "/tie.js";
+		import {} from "/mainapp.js";
+		$.doc();
 		
 		
 	</script>

@@ -1,6 +1,10 @@
 var port = 8080;
 var http = require('http');
+var $path = require("path");
 var fs = require('fs');
+var mimetype = require("./mimetype");
+
+var atsys = {};
 
 var allowHead = {
 	"Access-Control-Allow-Orgin": "*",
@@ -9,40 +13,11 @@ var allowHead = {
 	"Access-Control-Allow-Headers":"Orgin, X-Requested-With, Content-Type, Accept, Athorization"
 };
 
-function ls(req, res, dir)
-{
-	//todo: get from html3dedit
-	
-	
-}
 
-function readfile(req, res, path)
-{
-	//checkout
-	
-}
 
-var _mimetype = {
-	".txt": "text/plain",
-	".html": "text/html",
-	".htm": "text/html",
-	".js": "text/javascript",
-	".jpg": "image/jpeg",
-	".jpeg": "image/jpeg",
-	".png": "image/png",
-	".mp3": "audio/mpeg",
-	".mp4": "video/mp4"
-	
-};
 
-function mimetype(url)
-{
-	var i = url.lastIndexOf(".");
-	var tag = url.substring(i, url.length);
-	return _mimetype[tag];
-}
 
-function writeError(req, res, code, msg)
+function write(req, res, code, msg)
 {
 	var head = {
 		"Content-Type": mimetype(".txt")
@@ -53,9 +28,7 @@ function writeError(req, res, code, msg)
 }
 http.createServer(function(req, res)
 {
-	
-	
-	
+	//console.log("start");
 	if(req.method === "OPTIONS")
 	{
 		res.writeHead(204, allowHead);
@@ -67,9 +40,22 @@ http.createServer(function(req, res)
 	//console.log(url);
 	
 	
-	if(url.startsWith("/@sys"))
+	if(url.startsWith("/@"))
 	{
 		//todo get from file html3deditor
+		//sys[req.headers.systype](req.res);
+		//sys[req.headers.systype](req, res);
+		
+		var at1 = url.indexOf(":");
+		var att = url.substring(2, at1);
+		//console.log("att");
+		//console.log(att);
+		if(atsys[att] == undefined)
+		{
+			atsys[att] = require("./" + att);
+		}
+		atsys[att](req, res);
+		return;
 	}
 	
 	
@@ -80,7 +66,7 @@ http.createServer(function(req, res)
 	{
 		if(err)
 		{
-			writeError(req, res, 404, "Not Found!");
+			write(req, res, 404, url + " Not Found!");
 		}
 		else
 		{
@@ -122,3 +108,6 @@ http.createServer(function(req, res)
 	
 	
 }).listen(port);
+
+
+

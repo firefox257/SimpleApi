@@ -1,159 +1,132 @@
-import "./topMenuItem.js";
-import "./page.js"
-import "./itemList.js"
-import {$, $global, $q, $qa, $comp, $msgc, $fastpath} from "./tools.js" 
+
+import {$} from "/tie.js";
+import {} from "./ui/ui.js";
 
 const css = `
-
-	body
-	{
-		background-color: #333;
-		font-size: 3.5mm;
-		color:#ddd;
-	}
-	.mainapp
-	{
-		position: absolute;
-		top:0;
-		left:0;
-		width: 100vw;
-		height: 100vh;
-	}	
-	.topMenu
-	{
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: ${$global.topMenuHeight}mm;
-		border-bottom: 0.7mm solid #ffbb44;
-		padding: 0 0 1mm 0;
-	}
-	.sideMenu
-	{
-		position: absolute;
-		top: ${$global.topMenuHeight + 2}mm;
-		left: 0;
-		bottm: 0;
-		width: ${$global.sideMenuWidth}mm;
-		border-right: 0.5mm solid #666;
-		padding 0 1mm 0 0;
-	}
-	.mainSection
-	{
-		position:absolute;
-		top:${$global.topMenuHeight + 0.7}mm;
-		left:${$global.sideMenuWidth + 0.7}mm;
-		right: 0;
-		bottom: 0;
-		width: 100%;
-		height: 100%;
-	}
-`;
-const html = `
-<div class = "fullScreen">
-	<div class = "topMenu">
-		<comp tietype="topMenuItem" text = "Start" selected = "true"  id="starttopmenu" group="topmenu" tieevents="startClick:onclick"></comp>
-		<comp tietype="topMenuItem" text = "View" selected = "false" id="viewstopmenu" group="topmenu" tieevents="viewClick:onclick"></comp>	
-		<comp tietype="topMenuItem" text = "Edit" selected = "false" id="edittopmenu" group="topmenu" ></comp>
-		
-	
-	</div>
-	<div class = "sideMenu">
-	</div>
-	
-	<comp tietype="page" id="starttopmenu" group="topmenu"  show = "true">
-		<br/>
-		<br/>
-		
-		<div tie="multitext:innerHTML"></div>
-		<div tie="multitext:innerHTML"></div>
-		<div tie="multitext:innerHTML"></div>
-		<br/>
-		<div>multiinput</div>
-		<div tie = "multiinput:innerHTML"></div>
-		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
-		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
-		<input type="text" tie="multiinput:value" trackevents="oninput"></input>
-		
-		<br/>
-		<br/>
-		<br/>
-		<input type="text" tie="in1:value" trackevents="oninput"/><br/>
-		<br/>
-		<div> atradio</div>
-		<div tie="atradio:innerHTML"></div>
-		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "abc"/>
-		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "bcd"/>
-		<input type ="radio" name="group1" tieradio="atradio" trackevents="oninput" value = "cde"/>
-	</comp>
-	<comp tietype= "page" id="viewstopmenu" group="topmenu" show = "false">
-		view page
-		<input type="text" tie ="in2:value" tieevents ="input2:oninput" ></input>
-	</comp>	
-	<comp tietype= "page" id="edittopmenu" group="topmenu" show = "false">
-		edit page
-		<div tiedom = "itemsDom"></div>
-	</comp>	
-</div>
-`;
-
-function mainapp()
+body
 {
-	
-	var at = {
-		multitext: "asdf",
-		multiinput: "start",
-		itemsDom: undefined,
-		atradio: "bcd",
-		startClick(e)
-		{
-			console.log("start clicked");
-		},
-		viewClick(e)
-		{
-			console.log("view clicked");
-		},
-		in1: "start",
-		getitemselected(item)
-		{
-			alert(item);
-		},
-		in2: "here1asdf",
-		input2(e)
-		{
-			console.log(at.in2);
-		},
-		init()
-		{
-			at.tracker.in1.push(function(v)
-			{
-				console.log(at.in1);
-			});
-			at.tracker.atradio.push(function(v)
-			{
-				console.log("radio");
-				console.log(v);
-			});
-			at.multitext = "hi there";
-		},
-		afterinit()
-		{
-			for(var i = 1; i < 10; i++)
-			{
-				$.appendComp(at, at.itemsDom, {
-					tietype: "itemList",
-					text: "hi there" + i,
-					tieevents: "getitemselected:onclick"
-				});
-			}
-		}
-	};
-	
-	
+	font-size: 3.5mm;
+	background-color: #333;
+	color: #bbb;
+}
+.full
+{
+	position: absolute;
+	top:0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+}
+
+
+block
+{
+	padding:0;
+	margin:0;
+	display:inline-block;
+	background-color: rgba(0, 0, 0, 0);
+}
+`;
+
+const html = `
+<div class ="full">
+<br/>
+
+
+<br/>
+<br/>
+<comp tietype="toggleOnOffValue" state="0" value = "abc" tieevents="onchange:onchange" color="#0b0"></comp>
+<comp tietype="toggleOnOffValue" state="0" value = "bcd" tieevents="onchange:onchange"></comp>
+<comp tietype="toggleOnOffValue" state="0" value = "cde" tieevents="onchange:onchange"></comp>
+<br/>
+
+<br/>
+<span tie="title:innerHTML"></span><br/>
+<comp tietype ="toggleOnOffGroup" tieevents="onchange:onchange" color ="#0f0">
+{
+	"option 1": 
+	{
+		state: 1,
+		value: "abc"
+	},
+	"option 2":
+	{
+		state: 0,
+		value: "bcd"
+	},
+	"option 3":
+	{
+		state: 0,
+		value: "ddd"
+	},
+	"option 4":
+	{
+		state: 0,
+		value: "ddd1"
+	}
+}
+
+</comp>
+
+<br/>
+<br/>
+
+
+<comp tietype="checkbox" color="#00ff88" checked="0" tieevents="onchange1:onchange"></comp>
+
+<comp tietype="modal" show="0" color="#999" tieobj="atmodal">
+<table>
+	<tr>
+		<td colspan="2">
+		Hi there <comp tietype="checkbox" color="#ff3300" checked="0" tieevents="onchange:onchange"></comp>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<comp tietype="button" color = "#00ffaa" tieevents="onclick1:onclick">Ok</comp>
+		</td>
+		<td>
+			
+		</td>
+	</tr>
+</table>
+</comp>
+
+</div>
+
+`;
+
+var at = 
+{
+	onchange(v)
+	{
+		at.title = v;
+		if(v == undefined) at.title = "";
+		console.log(v);
+	}, 
+	onchange1(v)
+	{
+		at.atmodal.show = v;
+	},
+	onclick1(e)
+	{
+			console.log("ehre33");
+		at.atmodal.show = 0;
+	}
+};
+
+function mainappfunc()
+{
 	return at;
 }
-mainapp.css = css;
-mainapp.html = html;
 
-$comp("mainapp", mainapp);
+mainappfunc.css = css;
+mainappfunc.html = html;
+
+
+$.comp("mainapp", mainappfunc);
+
+
+
