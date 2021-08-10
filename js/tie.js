@@ -215,6 +215,7 @@ function setCompDomAttributes(scaf, dom, objscaf)
 		var value = dom.attributes[i].value;
 		if(!(attri == "tie" || attri == "tieevents" || attri == "tietype" || attri=="tieobj" || attri == "tieattributes"))
 		{
+			//potential @obj
 			objscaf.obj.attributes[attri] = value;
 		}
 	}//end for*/
@@ -224,6 +225,7 @@ function addCompAttributesSetTracker(po, o, path1, path2)
 {
 	$fastpath(po.tracker, path1).push(function(v)
 	{
+		//potential @obj
 		var v1 = $fastpath(o, path2);
 		if(v != v1) $fastpath(o, path2, v);
 	});
@@ -351,6 +353,7 @@ function addDomSetTracker(o, dom, path1, path2)
 {
 	$fastpath(o.tracker, path1).push(function(v)
 	{
+		//potential @obj
 		var v1 = $fastpath(dom, path2);
 		if(v != v1) $fastpath(dom, path2, v);
 	});
@@ -366,6 +369,7 @@ function createTieGetSet(o, path1)
 		},
 		set: function(v)
 		{
+			//potential @obj
 			$fastpath(o.backerfields, path1, v);
 			var tracker = $fastpath(o.tracker, path1);
 			for(var i = 0; i < tracker.length; i++)
@@ -400,6 +404,7 @@ function setTieBackerTrackerFields(scaf, objscaf, domscaf)
 			createTieGetSet(o, tie[i][0]);
 		}
 		//if found then only add a tracker
+		//potential @obj
 		$fastpath(dom, tie[i][1], $fastpath(o, "backerfields." + tie[i][0]) );
 		addDomSetTracker(o, dom, tie[i][0], tie[i][1]); 
 	}
@@ -450,6 +455,7 @@ function addDomSetClassTracker(o, dom, path)
 {
 	$fastpath(o.tracker, path).push(function(v)
 	{
+		//potential @obj
 		var v1 = $attr(dom, "class");  
 		if(v != v1) $attr(dom, "class", v);
 	});
@@ -465,6 +471,7 @@ function createTieClassGetSet(o, path1)
 		},
 		set: function(v)
 		{
+			//potential @obj
 			$fastpath(o.backerfields, path1, v);
 			var tracker = $fastpath(o.tracker, path1);
 			for(var i = 0; i < tracker.length; i++)
@@ -567,6 +574,7 @@ function setTieAttributes(scaf, objscaf, domscaf)
 			createTieAttributesGetSet(o, tieattributes[i][0]);
 		}
 		//if found then only add a tracker
+		//potential @obj
 		$attr(dom, tieattributes[i][1], $fastpath(o, "backerfields." + tieattributes[i][0]));
 		addDomSetAttributesTracker(o, dom, tieattributes[i][0], tieattributes[i][1]); 
 	}
@@ -588,6 +596,7 @@ function createTrackEvent(o, dom, path)
 		{
 			for(var i = 0; i < tie.length; i++)
 			{
+				//potential @obj
 				var v1 = $fastpath(o, tie[i][0]);
 				var v2 = $fastpath(dom, tie[i][1]);
 				if(v1 != v2)
@@ -600,6 +609,7 @@ function createTrackEvent(o, dom, path)
 		{
 			var v1 = $fastpath(o, tieclass);
 			var v2 = $attri(dom, "class");
+			//potential @obj
 			if(v2 != v1) $fastpath(o, tieclass, v2);
 		}
 		if(tieattributes)
@@ -607,7 +617,8 @@ function createTrackEvent(o, dom, path)
 			for(var i = 0; i < tieattributes.length; i++)
 			{
 				var v1 = $fastpath(o, tieattributes[i][0]);
-				var v2 = $attri(dom, tieattributes[i][1]);//$fastpath(dom, tie[i][1]);
+				var v2 = $attri(dom, tieattributes[i][1]);
+				//potential @obj
 				if(v1 != v2)
 				{
 					$fastpath(o, tieattributes[i][0], v2);
@@ -774,6 +785,7 @@ function parseComp(scaf, dom, parentobjscaf)
 	
 	objscaf.objfunc =  $comp(tietype);
 	objscaf.obj = objscaf.objfunc();
+	if(!objscaf.obj.attributes) objscaf.obj.attributes={};
 	//objscaf.dom.parentobj = objscaf.obj;
 	objscaf.obj.parentdom = objscaf.dom;
 	
@@ -925,6 +937,12 @@ export function $removeComp(o)
 	o.parentdom.remove();
 }
 
+export function $appendcss(strcss)
+{
+	
+	document.head.insertAdjacentHTML("beforeend", `<style>${strcss}</style>`);
+}
+
 export var $ = {
 	global: $global,
 	q: $q,
@@ -938,7 +956,8 @@ export var $ = {
 	//parse: $parse,
 	appendComp: $appendComp,
 	append: $append,
-	removeComp: $removeComp
+	removeComp: $removeComp,
+	appendcss: $appendcss
 };
 
 
