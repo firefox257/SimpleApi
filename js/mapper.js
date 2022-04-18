@@ -3,16 +3,23 @@ const Map = (function()
     var maps = {};
 
 
-    var atthis = function (class1, val)
+    var atthis = function (class2, val)
     {
-        var n2 = class1.name;
+        var n2 = class2.name;
         var n1 = val.constructor.name;
-        var o = new class1();
+
+        var mi = maps[n1][n2].defs;
+
+        var o = new class2();
         for(var i in val)
         {
-            if(i in o)
+            var ii = i.toLowerCase();
+           
+            var iii = mi[1][ii];
+
+            if(ii in mi[1])
             {
-                if(typeof val[i] != 'function' && typeof o[i] != 'function') o[i] = val[i];
+                if(typeof val[i] != 'function' && typeof o[iii] != 'function') o[iii] = val[i];
             }
         }
         maps[n1][n2].tiefunc(val, o);
@@ -22,9 +29,25 @@ const Map = (function()
     {
         var n1 = class1.name;
         var n2 = class2.name;
+
+        var o1 = new class1();
+        var o2 = new class2();
+
+        var defs=[{}, {}];
+        for(var i in o1)
+        {
+            defs[0][i.toLowerCase()] = i;
+        }
+        for(var i in o2)
+        {
+            defs[1][i.toLowerCase()] = i;
+        }
+
+      
         
         if(maps[n1] == undefined)maps[n1] = {};
         maps[n1][n2] = {
+            defs: defs,
             tiefunc: tiefunc
         };
     };
@@ -46,7 +69,7 @@ class try1
 class try2
 {
     name;
-    id;
+    Id;
 }
 
 Map.Set(try1, try2, function(i, o)
@@ -65,6 +88,29 @@ t1.other = "here 123";
 var t2 = Map(try2, t1);
 console.log(t2);
 
-var src = `
 
-`;
+
+
+class User
+{
+
+    first;
+    last;
+    id;
+    
+}
+
+
+
+/*
+
+var v1 =Object.assign(new User(), {
+    first:"first nemae",
+    last:"lastname",
+    id: 123
+});
+
+console.log("here434344");
+console.log(v1);
+console.log(v1.constructor.name);
+*/
