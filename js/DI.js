@@ -1,11 +1,9 @@
-
-
-
-
+//dependency injection.
 const DI = (function()
 {
     var objs = [];
     return {
+        //Singlton
         S(cl)
         {
             var at= {
@@ -36,6 +34,7 @@ const DI = (function()
             objs[cl.name] = at;
 
         },
+        //Transitory
         T(cl)
         {
             var at = {
@@ -96,4 +95,11 @@ DI.T(try2);
 
 var v = DI.Get(try2);
 v.$di.try1.func();
+
+
+
+
+
+
+
 
