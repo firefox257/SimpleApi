@@ -63,24 +63,32 @@ uint64_t GetClassId()
 }\
 
 template<class N>
-class CountRef
+class Ref
 {
 	public:
 	N * n = 0;
 	int * count = 0;
-	CountRef()
+	Ref()
 	{
 		n = new N;
 		count = new int;
 		(*count) = 1;
 	}
-	CountRef(const CountRef<N> & p)
+	Ref(const Ref<N> & p)
 	{
 		n = p.n;
 		count = p.count;
 		(*count)++;
 	}
-	~CountRef()
+	template<class A>
+	Ref(A * a)
+	{
+		n = a;
+		count = new int;
+		(*count) = 1;
+	}
+
+	~Ref()
 	{
 		(*count)--;
 		if((*count) <=0)
@@ -89,7 +97,7 @@ class CountRef
 			delete(count);
 		}
 	}
-	CountRef<N> & operator=(const CountRef<N> & p)
+	Ref<N> & operator=(const Ref<N> & p)
 	{
 		(*count)--;
 		if((*count)<=0)
