@@ -1,7 +1,7 @@
-#ifndef ASYNC_CPP
-#define ASYNC_CPP
+#ifndef ASYNC_HPP
+#define ASYNC_HPP
 
-#include "Types.cpp"
+#include <stdint.h>
 #include <iostream>
 #include <string>
 #include <list>
@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define el << "\r\n"
+
 
 
 void SleepHours(int d)
@@ -73,6 +73,65 @@ class DoneStateQueue: public queue<DoneState>
 };
 
 
+
+class AsyncObjBase
+{
+    DoneState * doneptr = 0;
+    public:
+    virtual void operator()() = 0;
+
+    void SetWaiter(DoneState & donewait)
+	{
+		doneptr = &donewait;
+	}
+
+    void Done()
+	{
+		if(doneptr != 0)
+		{
+			(*doneptr) = true;
+		}
+	}
+};
+
+class AsyncObj: public AsyncObjBase
+{
+    function<void()> _func;
+    public:
+    AsyncObj(function<void()> func)
+	{
+		_func = func;
+	}
+
+    void operator()()
+	{
+		_func();
+	}
+
+};
+
+template<class OBJ, class FUNC, class ... ARGS>
+class AsyncClassFunc: public AsyncObjBase
+{
+    OBJ * optr = 0;
+    FUNC Func;
+    tuple<ARGS...> tup;
+    public:
+    AsyncClassFunc(OBJ & o, FUNC func, ARGS ... args)
+    {
+        optr = &o;
+        Func = func; 
+        tup =  tuple<ARGS...>(args...);
+    }
+
+    void operator()()
+	{
+		apply(Func, tuple_cat(make_tuple(optr), tup) );
+	}
+
+};
+
+/*
 class AsyncObj
 {
 	function<void()> _func;
@@ -101,14 +160,15 @@ class AsyncObj
 	}
 	
 };
+*/
 
 #define NUMBEROFASYNCCORES 256
 class AsyncWorkers
 {
-	queue<AsyncObj*> masterqueue;
+	queue<AsyncObjBase*> masterqueue;
 	
 	thread * threadworker[NUMBEROFASYNCCORES];
-	queue<mint> inactivethreadworkerid;
+	queue<int> inactivethreadworkerid;
 	
 	
 	
@@ -119,7 +179,7 @@ class AsyncWorkers
 	public:
 	AsyncWorkers()
 	{
-		for(mint i = 0; i < NUMBEROFASYNCCORES; i++)
+		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
 			threadworker[i] = new thread([](){});
 			inactivethreadworkerid.push(i);
@@ -128,13 +188,13 @@ class AsyncWorkers
 	}
 	~AsyncWorkers()
 	{
-		for(mint i = 0; i < NUMBEROFASYNCCORES; i++)
+		for(int i = 0; i < NUMBEROFASYNCCORES; i++)
 		{
 			(*threadworker[i]).join();
 			delete(threadworker[i]);
 		}
 	}
-	void Add(AsyncObj * asyncobject)
+	void Add(AsyncObjBase * asyncobject)
 	{
 		unique_lock addlck(addqueuemtx, defer_lock);
 		addlck.lock();
@@ -144,8 +204,8 @@ class AsyncWorkers
 		
 		unique_lock threadrenewlck(addqueuemtx, defer_lock);
 		threadrenewlck.lock();
-			mbool incactiveempty = inactivethreadworkerid.empty();
-			mint threadid;
+			bool incactiveempty = inactivethreadworkerid.empty();
+			int threadid;
 			if(!incactiveempty)
 			{
 				threadid = inactivethreadworkerid.front();
@@ -157,10 +217,10 @@ class AsyncWorkers
 		{
 				(*threadworker[threadid]).join();
 				delete(threadworker[threadid]);
-				threadworker[threadid] = new thread([&](mint id)
+				threadworker[threadid] = new thread([&](int id)
 				{
-					mbool empty = false;
-					AsyncObj * n;
+					bool empty = false;
+					AsyncObjBase * n;
 					do
 					{
 						unique_lock addlck(addqueuemtx, defer_lock);
@@ -204,20 +264,45 @@ void AsyncRun(function<void()> func)
 	 __ASYNCWORKERS.Add(new AsyncObj(func));
 }
 
-void AsyncRun(function<void()> func, DoneState & done)
+void AsyncRun( DoneState & done, function<void()> func)
 {
 	AsyncObj * asyncobject = new AsyncObj(func);
 	(*asyncobject).SetWaiter(done);
 	 __ASYNCWORKERS.Add(asyncobject);
 }
 
-void AsyncRun(function<void()> func, DoneStateQueue & donequeue)//asyncobj * asyncobject, donestate & done)
+void AsyncRun(DoneStateQueue & donequeue, function<void()> func)//asyncobj * asyncobject, donestate & done)
 {
 	AsyncObj * asyncobject = new AsyncObj(func);
 	(*asyncobject).SetWaiter(donequeue.Create());
 	 __ASYNCWORKERS.Add(asyncobject);
 
 }
+
+
+template<class OBJ, class FUNC, class ... ARGS>
+void AsyncRunClass(OBJ & o, FUNC func, ARGS&&... args)
+{
+     __ASYNCWORKERS.Add(new AsyncClassFunc<OBJ, FUNC, ARGS...>(o, func, args...));
+}
+
+template<class OBJ, class FUNC, class ... ARGS>
+void AsyncRunClass( DoneState & done, OBJ & o, FUNC func, ARGS &&... args)
+{
+    auto asyncobject = new AsyncClassFunc<OBJ, FUNC, ARGS&&...>(o, func, args...);
+	(*asyncobject).SetWaiter(done);
+    __ASYNCWORKERS.Add(asyncobject);
+}
+
+template<class DONESTATEQUEUE, class OBJ, class FUNC, class ... ARGS>
+void AsyncRunClass(DONESTATEQUEUE & donequeue, OBJ & o, FUNC func, ARGS&&... args)
+{
+   auto asyncobject = new AsyncClassFunc<OBJ, FUNC, ARGS...>(o, func, args...);
+	(*asyncobject).SetWaiter(donequeue.Create());
+     __ASYNCWORKERS.Add(asyncobject);
+}
+
+
 
 void WaitFor(DoneState &done)
 {
