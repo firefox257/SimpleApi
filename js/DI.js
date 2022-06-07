@@ -2,9 +2,10 @@
 const DI = (function()
 {
     var objs = [];
+    var atcount = 0;
     return {
         //Singlton
-        S(cl)
+        Singlton(cl)
         {
             var at= {
                 cl: cl,
@@ -35,7 +36,7 @@ const DI = (function()
 
         },
         //Transitory
-        T(cl)
+        Transitory(cl)
         {
             var at = {
                 cl: cl,
@@ -57,13 +58,70 @@ const DI = (function()
             };
             objs[cl.name] = at
         },
+        Reset()
+        {
+            atcount++;
+        },
+        //Scope
+        Scope(cl)
+        {
+            var at= {
+                atcountthis: atcount,
+                cl: cl,
+               obj: (function()
+               {
+                   var at = new cl();
+                   if(at.$di != undefined)
+                    {
+                        for(var i in at.$di)
+                        {
+                            //console.log(at.$di[i]);
+                             at.$di[i] = objs[i].get();
+                        }
+                    }
+
+                    return at;
+               })(),
+               getObj()
+               {
+                   if(at.atcountthis != atcount)
+                   {
+                       at.obj = (function()
+                       {
+                           var at = new cl();
+                           if(at.$di != undefined)
+                            {
+                                for(var i in at.$di)
+                                {
+                                    //console.log(at.$di[i]);
+                                     at.$di[i] = objs[i].get();
+                                }
+                            }
+        
+                            return at;
+                       })();
+                       at.atcountthis = atcount;
+                   }
+                   return this.obj;
+               },
+               get()
+               {
+                    return this.getObj();
+               }
+            };
+            objs[cl.name] = at;
+
+        },
+
         Get(cl)
         {
             return objs[cl.name].get();
         }
     };
 })();
+globalThis.DI = DI;
 
+/*
 class try1
 {
     x = 1;
@@ -96,7 +154,7 @@ DI.T(try2);
 var v = DI.Get(try2);
 v.$di.try1.func();
 
-
+*/
 
 
 
