@@ -1,8 +1,56 @@
-var port = 8080;
+var httpport = 8080;
+var httpsport =  4443;
+
+function include(p)
+{
+	return require(`${__dirname}${p}`);
+}
+globalThis.include = include;
+
+
+include("/mimetype");
+include("/Util.js");
+includeDir("/Exceptions/");
+includeDir("/ServerComponents/");
+includeDir("/Requests/");
+includeDir("/Responses/");
+includeDir("/Controllers/");
+
+
 var http = require('http');
+var https = require('https');
+
 var $path = require("path");
 var fs = require('fs');
-var mimetype = require("./mimetype");
+
+
+var httpsoptions = {
+  key: fs.readFileSync(`key.pem`),
+  cert: fs.readFileSync(`cert.pem`)
+};
+
+/*
+
+var httpsoptions = {
+  key: fs.readFileSync(`${__dirname}/key.pem`),
+  cert: fs.readFileSync(`${__dirname}/cert.pem`)
+};
+//*/
+
+
+
+
+
+
+////////////////////////////
+
+
+
+
+///////////////////////////
+
+
+
 
 var atsys = {};
 
@@ -26,8 +74,9 @@ function write(req, res, code, msg)
 	res.write(msg);
 	res.end();
 }
-http.createServer(function(req, res)
+function handelwebHandel(req, res)
 {
+	//console.log("type method: " + req.method);
 	//console.log("start");
 	if(req.method === "OPTIONS")
 	{
@@ -37,14 +86,27 @@ http.createServer(function(req, res)
 	}
 	
 	var url = decodeURI(req.url.toString());
-	//console.log(url);
+	//console.log("url:" +url);
 	
 	
-	
+	if(url.startsWith("/api"))
+	{
+		Route.Send(url, req, res);
+		return;
+	}
 	
 	
 	if(url.endsWith("/"))url+="index.html";
-	url=url.substring(1, url.length);
+	url=__dirname + "/Web/" + url.substring(1, url.length);
+	//console.log("url:" + url);
+	if(!fs.existsSync(url))
+	{
+		write(req, res, 404, url + " Not Found!");
+		return;
+	}
+	
+	
+	if(fs.statSync(url).isDirectory()) url +="/index.html";
 	
 	fs.stat(url, function(err, stat)
 	{
@@ -91,5 +153,24 @@ http.createServer(function(req, res)
 	});
 	
 	
-}).listen(port);
+}
+function handelweb(req, res)
+{
+	try
+	{
+		handelwebHandel(req, res);
+	}
+	catch(err)
+	{
+		ExceptionResponse(req, res, err);
+	}
+}
 
+
+http.createServer(handelweb).listen(httpport);
+https.createServer(httpsoptions,handelweb).listen(httpsport);
+
+
+//webAppReady();
+
+console.log("Ready"+__dirname);

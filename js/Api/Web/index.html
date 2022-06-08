@@ -1,0 +1,31 @@
+<html>
+
+<body>
+	Test api
+	<span onclick = "testthis()">Click here</span>
+	<script>
+		
+		function testthis()
+		{
+			fetch("/api/testpost/", 
+			{
+				method: "POST",
+				headers: 
+				{
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(
+				{
+					Id: 123
+				})
+			})
+			.then(data =>
+			{
+				console.log(data);
+			});
+		}
+		
+	</script>
+t
+</body>
+</html>

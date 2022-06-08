@@ -55,9 +55,9 @@ const Map = (function()
     
 })();
 
+globalThis.Map  = Map;
 
-
-
+/*
 class try1
 {
     first;
