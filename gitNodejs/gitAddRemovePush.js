@@ -1,150 +1,150 @@
-// sync-repo.js
+// Import necessary modules
 const git = require('isomorphic-git');
-const http = require('isomorphic-git/http/node'); // Use Node.js HTTP client
-const fs = require('fs');
-const path = require('path');
+const http = require('isomorphic-git/http/node'); // HTTP client for pushing
+const fs = require('fs'); // Use Node.js built-in fs
 
 // --- Configuration ---
-// !!! IMPORTANT: DO NOT hardcode tokens in production code.
-// Use environment variables or a secure config management system.
-const GITHUB_TOKEN = 'token here'; // Replace or set environment variable
-const REPO_DIR = "github"; // Path to your local repository clone
-const REMOTE_URL = 'https://github.com/firefox257/SimpleApi'; // HTTPS URL of your remote repository
-const BRANCH_NAME = 'master'; // Or 'master', or the branch you want to push to
-const COMMIT_MESSAGE = `Automated commit: ${new Date().toISOString()}`;
-const AUTHOR_NAME = 'Aaron';
-const AUTHOR_EMAIL = 'your.email@example.com';
+const repoDir = 'github'; // IMPORTANT: Change to your repository path
+const remoteName = 'origin'; // Usually 'origin'
+const branchName = 'main'; // Or 'master', or your target branch
+const repoUrl = 'https://github.com/firefox257/nodejsgame1'; // IMPORTANT: Change to your repo URL
+const gitHubToken = 'token here'; // IMPORTANT: Use env var or replace securely
+const commitMessage = 'Automated commit and push';
+const authorName = 'Your Name';
+const authorEmail = 'your.email@example.com';
 // --- End Configuration ---
 
-// Helper function to check if the token is set
-function checkToken() {
-    if (!GITHUB_TOKEN || GITHUB_TOKEN === 'YOUR_GITHUB_TOKEN_HERE') {
-        console.error(`
-  **********************************************************************
-  ERROR: GitHub token is not set!
-  Please set the YOUR_GITHUB_TOKEN environment variable or replace
-  'YOUR_GITHUB_TOKEN_HERE' in the script.
-  NEVER commit your token directly into your version control history.
-  **********************************************************************
-  `);
-        process.exit(1); // Exit the script
-    }
-}
+// Helper function to log messages
+const log = (message) => console.log(`[${new Date().toISOString()}] ${message}`);
 
-// Main async function to perform git operations
+// Main async function to perform Git operations
 async function syncChanges() {
-    checkToken(); // Check if the token is configured
+    log('Starting repository sync process...');
 
-    console.log(`Starting sync process for directory: ${REPO_DIR}`);
+    if (!gitHubToken || gitHubToken === 'YOUR_GITHUB_TOKEN') {
+        console.error("Error: GitHub token not set. Please set the GITHUB_TOKEN environment variable or update the script.");
+        return; // Exit if token is not configured
+    }
 
+    // --- 1. Stage all changes (additions, modifications, deletions) ---
     try {
-        // 1. Get the status matrix to determine changes
-        console.log('Checking repository status...');
-        const statusMatrix = await git.statusMatrix({ fs, dir: REPO_DIR });
-
-        const filesToAdd = [];
-        const filesToRemove = [];
-
-        statusMatrix.forEach(([filepath, headStatus, workdirStatus, stageStatus]) => {
-            // Determine status relative to the index (staging area)
-            // See status codes: https://isomorphic-git.org/docs/en/statusMatrix
-
-            // Files that are deleted in the working directory but present in HEAD/Index need removal
-            if (workdirStatus === 0 && (headStatus !== 0 || stageStatus !== 0)) {
-                filesToRemove.push(filepath);
-            }
-            // Files that are new, modified, or otherwise changed in the working directory need adding
-            else if (workdirStatus > 0 && workdirStatus !== stageStatus) {
-                 // Includes new files (head=0, workdir=2, stage=0) -> add
-                 // Includes modified files (head=1, workdir=2, stage=1) -> add
-                 // Includes files added to index but modified again (head=*, workdir=*, stage=2) -> add
-                filesToAdd.push(filepath);
-            }
-        });
-
-        console.log(`Files to add/update: ${filesToAdd.length}`);
-        console.log(`Files to remove: ${filesToRemove.length}`);
-
-        // Check if there are any changes to commit
-        if (filesToAdd.length === 0 && filesToRemove.length === 0) {
-            console.log('No changes detected in the working directory. Nothing to commit or push.');
-            return; // Exit early if no changes
-        }
-
-        // 2. Stage removals
-        if (filesToRemove.length > 0) {
-            console.log('Staging removals...');
-            await Promise.all(filesToRemove.map(filepath =>
-                git.remove({ fs, dir: REPO_DIR, filepath })
-            ));
-            console.log('Removals staged.');
-        }
-
-        // 3. Stage additions/modifications
-        if (filesToAdd.length > 0) {
-            console.log('Staging additions/modifications...');
-            await Promise.all(filesToAdd.map(filepath =>
-                git.add({ fs, dir: REPO_DIR, filepath })
-            ));
-            console.log('Additions/modifications staged.');
-        }
-
-        // 4. Commit the staged changes
-        console.log('Committing changes...');
-        const commitSha = await git.commit({
+        log(`Staging all changes in directory: ${repoDir}`);
+        // git.add with '.' stages all unstaged changes, including removals.
+        await git.add({
             fs,
-            dir: REPO_DIR,
-            message: COMMIT_MESSAGE,
-            author: {
-                name: AUTHOR_NAME,
-                email: AUTHOR_EMAIL,
-            },
-            // Committer can be the same or different (e.g., the script/bot)
-            // committer: {
-            //   name: 'Sync Bot',
-            //   email: 'bot@example.com',
-            // }
+            dir: repoDir,
+            filepath: '.', // Stage everything within the directory
         });
-        console.log(`Changes committed successfully. SHA: ${commitSha}`);
+        log('Staging successful.');
+    } catch (error) {
+        console.error('Error during staging:', error);
+        log('Aborting sync process due to staging error.');
+        // Note: Staging might be partially complete. Manual cleanup might be needed.
+        return; // Stop the process
+    }
 
-        // 5. Push the commit to the remote repository
-        console.log(`Pushing changes to remote: ${REMOTE_URL} branch: ${BRANCH_NAME}...`);
+    // --- Check if there's anything to commit ---
+    // Get status to see if staging resulted in changes to be committed
+    let hasChangesToCommit = false;
+    try {
+        const status = await git.statusMatrix({ fs, dir: repoDir });
+        // Check if any file has a status indicating it's staged (index status != 0 and != 1)
+        // Status codes: HEAD(0), WORKDIR(1), STAGE(2)
+        // Staged states include: added(0,2,2), modified(1,2,2), deleted(1,0,0->needs remove), staged but modified(1,2,3), etc.
+        // We look for files where the stage status indicates a change compared to HEAD
+        hasChangesToCommit = status.some(row => row[2] !== row[0]); // If stage status differs from head status
 
-        // Define the authentication callback
-        const onAuth = (url) => {
-            // For GitHub token authentication over HTTPS
-            // The password field is used for the token
-            console.log(`Authentication requested for: ${url}`);
-            return {
-                username: GITHUB_TOKEN, // Use the token as the username (or password, both work for GitHub PAT)
-                // password: GITHUB_TOKEN // Alternatively, you can sometimes use it here. Username method is common.
-            };
-        };
+        if (!hasChangesToCommit) {
+            log('No changes staged for commit. Nothing to do.');
+            return; // Exit gracefully
+        }
+        log('Changes detected for commit.');
+    } catch (error) {
+        console.error('Error checking status before commit:', error);
+        log('Aborting sync process due to status check error.');
+        return;
+    }
 
+
+    // --- 2. Commit staged changes ---
+    let commitSha;
+    try {
+        log(`Committing changes with message: "${commitMessage}"`);
+        commitSha = await git.commit({
+            fs,
+            dir: repoDir,
+            message: commitMessage,
+            author: {
+                name: authorName,
+                email: authorEmail,
+            },
+            // committer is often the same as author for simple scripts
+            committer: {
+                name: authorName,
+                email: authorEmail,
+            }
+        });
+        log(`Commit successful. SHA: ${commitSha}`);
+    } catch (error) {
+        console.error('Error during commit:', error);
+        log('Aborting sync process due to commit error.');
+        // Note: If commit failed, staged changes remain staged.
+        return; // Stop the process
+    }
+
+    // --- 3. Push changes to the remote repository ---
+    try {
+        log(`Pushing branch '${branchName}' to remote '${remoteName}' (${repoUrl})`);
         const pushResult = await git.push({
             fs,
-            http, // Pass the Node HTTP client
-            dir: REPO_DIR,
-            url: REMOTE_URL, // Use the remote URL directly
-            ref: BRANCH_NAME, // Specify the local branch to push
-            remoteRef: `refs/heads/${BRANCH_NAME}`, // Specify the remote branch
-            force: false, // Set to true if you need to force push (use with caution!)
-            onAuth: onAuth, // Provide the authentication callback
+            http, // Pass the HTTP client
+            dir: repoDir,
+            remote: remoteName,
+            ref: branchName, // Push the specific branch
+            url: repoUrl, // Provide URL for push (isomorphic-git sometimes needs it explicitly)
+            onAuth: () => ({ // Authentication callback
+                username: gitHubToken, // For GitHub PAT, the username can be the token itself or 'x-access-token'
+                // password: '', // Password field is often ignored when username is a token, but provide if needed by provider
+                // Or for GitHub PATs, often use:
+                // username: 'oauth2accesstoken', // A common convention for tokens
+                // password: gitHubToken
+            }),
+            // Use force: true carefully if you need to overwrite remote history (not recommended generally)
+            // force: false,
         });
 
-        console.log('Push result:', pushResult);
-        if (pushResult.ok) {
-            console.log('Changes pushed successfully!');
+        log('Push successful.');
+        if (pushResult && pushResult.ok && pushResult.ok.length > 0) {
+             log(`Remote refs updated: ${pushResult.ok.join(', ')}`);
+        } else if (pushResult && pushResult.errors && pushResult.errors.length > 0) {
+             log(`Push reported errors: ${pushResult.errors.join(', ')}`);
         } else {
-            console.error('Push failed:', pushResult.errors);
-            throw new Error(`Push failed: ${pushResult.errors.join(', ')}`);
+            log('Push completed, but no specific refs reported as updated (this might be normal).');
         }
 
     } catch (error) {
-        console.error('An error occurred during the git sync process:', error);
-        process.exitCode = 1; // Indicate failure
+        console.error('Error during push:', error);
+        log('Push operation failed.');
+        // --- Potential Rollback (Informational) ---
+        // If the push fails, the commit (commitSha) is still local.
+        // You *could* try to reset the local branch:
+        // log(`Attempting to roll back local commit ${commitSha}...`);
+        // try {
+        //   await git.reset({ fs, dir: repoDir, ref: 'HEAD~1', mode: 'hard' });
+        //   log('Local commit rolled back.');
+        // } catch (resetError) {
+        //   console.error('Failed to roll back local commit:', resetError);
+        //   log('Manual intervention may be required to clean up the local repository.');
+        // }
+        // CAUTION: Automating 'git reset --hard' is risky. It discards changes.
+        // For this script, we are just logging the push error.
+        log('The commit remains local. Manual push or reset may be required.');
+        // --- End Potential Rollback ---
+        return; // Stop the process
     }
+
+    log('Repository sync process completed successfully.');
 }
 
-// --- Run the sync process ---
+// Execute the main function
 syncChanges();
